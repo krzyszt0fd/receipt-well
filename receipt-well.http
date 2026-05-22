@@ -1,0 +1,6 @@
+@receipt_well_HostAddress = http://localhost:5191
+
+GET {{receipt_well_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
