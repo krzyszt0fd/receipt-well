@@ -1,6 +1,7 @@
 {
   "permissions": {
     "allow": [
+      "Skill(10x-rule-review)"
     ]
   }
 }

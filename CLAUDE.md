@@ -19,14 +19,15 @@ ReceiptWell — receipt upload, AI extraction, and search. ASP.NET Core 9.0 mini
 This project uses NuGet lock files with content hashes. After adding or updating any package version, run `dotnet restore` to rebuild the lock file before committing.
 
 ## Logging
-Always log application flow:
-- Use Information level for reporting normal application flow e.g. data successfully saved, image processed etc. Including validation failures.
-- Use warning for exceptions that were caught and handled by alternative application path.
-- Log error whenever the exceptions breaks a process (e.g. background processing) or results in 5xx error returned to the API client.
-- Log fatal/critical if application can not start or crashes
-Log structure:
+### Log structure:
 - Use contextual logging: always log current identity ID and the entity ID being changed or accessed
 - Always use source-generated logging
+### Log levels:
+ - Input validation failures → Info (not Warning).
+ - Caught exceptions with a working fallback path → Warning.
+ - Exceptions returned back to API client or broken background job → Error.
+ - App startup failure → Fatal/Critical.
+ - You must not log web requests or responses as this will be covered in a dedicated middleware.
 
 ## Maintain example endpoints collection
 After modification to an existing endpoint contract or new one added or deleted, update example http request collection in @receipt-well.http.
@@ -38,8 +39,9 @@ Solo dev during MVP — commit directly to `develop`, no PR required.
 ## Commands
 
 ```bash
-dotnet run                                              # http://localhost:5191 | https://localhost:7028
-dotnet test --filter "FullyQualifiedName~<TestName>"   # xUnit single test
+dotnet build                                            # run after you're done with edits
+dotnet run -lp "https"                                  # http://localhost:5191 | https://localhost:7028
+dotnet test --filter "FullyQualifiedName~<TestName>"    # xUnit single test
 ```
 
 ## Stack
