@@ -32,11 +32,3 @@ This project uses NuGet lock files with content hashes. After adding or updating
 ## Maintain example endpoints collection
 
 After modification to an existing endpoint contract or new one added or deleted, update example http request collection in `@../../receipt-well.http`.
-
-## Commands
-
-```bash
-dotnet build                                            # run after you're done with edits
-dotnet run -lp "https"                                  # http://localhost:5191 | https://localhost:7028
-dotnet test --filter "FullyQualifiedName~<TestName>"    # xUnit single test
-```
