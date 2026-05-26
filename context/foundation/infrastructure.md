@@ -1,13 +1,14 @@
 ---
 project: receipt-well
 researched_at: 2026-05-26
-recommended_platform: Azure App Service (Linux S1, West Europe)
+recommended_platform: Azure App Service (Windows D1, West Europe)
 runner_up: Render
 context_type: mvp
 tech_stack:
   language: C#
   framework: ASP.NET Core webapi
-  runtime: .NET 8 LTS
+  runtime: .NET 9 STS (GA on Azure App Service; EOL ~Nov 2026)
+  app_service_plan: D1 Shared (Windows) — no deployment slots, no always-on
   frontend: Angular — Azure Static Web Apps (global CDN, MSAL for auth)
   auth: Azure B2C + MSAL (handled in Angular via @azure/msal-angular, not SWA built-in auth)
   background_jobs: Azure Functions Consumption plan — Event Grid trigger on blob upload
@@ -18,9 +19,9 @@ tech_stack:
 
 ## Recommendation
 
-**Deploy on Azure App Service (Linux, S1 tier, West Europe).**
+**Deploy on Azure App Service (Windows, D1 Shared tier, West Europe).**
 
-The user already operates a commercial Azure subscription (100 €/month), has hands-on Azure expertise, and the PRD stack names five Azure-native services: Blob Storage for receipt images, Azure OpenAI for extraction, Azure AI Search for tag search, Azure Functions for event-driven background processing, and Azure B2C + MSAL for auth. Every alternative platform would require running all five of those services as external cross-cloud dependencies over the public internet. Azure App Service is the only platform where every component in the architecture is co-located, connected via Managed Identity (no secrets), and supported natively without a Dockerfile. The S1 tier (not B1) is required for deployment slots, which enable zero-downtime rollback — a meaningful safety net for a solo developer with no staging review process. The Angular frontend deploys to **Azure Static Web Apps** (free tier), giving it a global CDN and auto-generated GitHub Actions workflow without adding compute cost; auth is handled by `@azure/msal-angular` talking directly to the B2C tenant, keeping the SWA built-in auth wrapper out of the picture. Receipt extraction is triggered by an **Event Grid subscription on the Blob Storage container** rather than a polling Blob trigger, reducing extraction latency from up to 10 minutes to seconds.
+The user already operates a commercial Azure subscription (100 €/month), has hands-on Azure expertise, and the PRD stack names five Azure-native services: Blob Storage for receipt images, Azure OpenAI for extraction, Azure AI Search for tag search, Azure Functions for event-driven background processing, and Azure B2C + MSAL for auth. Every alternative platform would require running all five of those services as external cross-cloud dependencies over the public internet. Azure App Service is the only platform where every component in the architecture is co-located, connected via Managed Identity (no secrets), and supported natively without a Dockerfile. The **D1 Shared tier** (~$9.49/month) replaces the S1 tier to reduce cost — this requires **Windows hosting** (D1 is not available on Linux App Service Plans). Deployment slots and preview environments are not used; rollback is a redeploy of the previous build artifact. The Angular frontend deploys to **Azure Static Web Apps** (free tier, no PR preview environments enabled), giving it a global CDN and auto-generated GitHub Actions workflow without adding compute cost; auth is handled by `@azure/msal-angular` talking directly to the B2C tenant, keeping the SWA built-in auth wrapper out of the picture. Receipt extraction is triggered by an **Event Grid subscription on the Blob Storage container** rather than a polling Blob trigger, reducing extraction latency from up to 10 minutes to seconds.
 
 ## Platform Comparison
 
@@ -48,7 +49,7 @@ The user already operates a commercial Azure subscription (100 €/month), has h
 
 #### 1. Azure App Service (Recommended)
 
-Native .NET 8/9 support on Linux (no Dockerfile required). All five co-located Azure services connect via Managed Identity — no secrets to rotate or store in config. Deployment slots on S1 provide near-instant rollback by re-swapping production and staging. Azure MCP Server (.mcpb, GA April 2026) covers App Service, Blob Storage, Key Vault, AI services, and Functions — the widest managed-service coverage of any platform evaluated. Azure CLI (`az webapp`) provides deploy, log tail, and slot swap from the terminal. GitHub Actions `azure/webapps-deploy@v3` is GA and OIDC-backed (no long-lived secrets). Microsoft Learn MCP Server (GA) makes Azure docs directly accessible to Claude Code.
+Native .NET 9 STS support on Windows (no Dockerfile required; GA, EOL ~Nov 2026). All five co-located Azure services connect via Managed Identity — no secrets to rotate or store in config. D1 Shared tier at ~$9.49/month eliminates deployment slots; rollback is a redeploy from a prior SHA. Azure MCP Server (.mcpb, GA April 2026) covers App Service, Blob Storage, Key Vault, AI services, and Functions — the widest managed-service coverage of any platform evaluated. Azure CLI (`az webapp`) provides deploy and log tail from the terminal. GitHub Actions `azure/webapps-deploy@v3` is GA and OIDC-backed (no long-lived secrets). Microsoft Learn MCP Server (GA) makes Azure docs directly accessible to Claude Code.
 
 #### 2. Render
 
@@ -66,7 +67,7 @@ Mature `flyctl` CLI; Frankfurt (`fra`) is the closest option to Warsaw (~600 km)
 
 2. **Azure Functions Consumption cold starts.** The receipt extraction flow runs on a Consumption plan. .NET cold starts on Consumption regularly reach 8–12 seconds. Users will see "pending" status longer than expected if the UX does not explicitly communicate async processing.
 
-3. **S1 required for zero-downtime rollback.** Deployment slots (the only CLI-scriptable rollback path) require Standard (S1, ~$69/month West Europe Linux). B1 (~$55/month) has no slots — rollback means a full redeploy with downtime.
+3. **D1 Shared has no SLA and shared compute.** The D1 tier runs on shared infrastructure — noisy-neighbour CPU contention is possible. There is no Azure SLA for the Shared tier. If a neighbour workload spikes, the API will be slow. Acceptable for an MVP with low traffic; revisit at first signs of p95 latency degradation.
 
 4. **Azure CLI verbosity.** `az` is a Python CLI; `az webapp log tail` drops the connection under low activity and is less reliable than `fly logs` or `railway logs --tail`. Agents using `az` directly need more output parsing than with alternative CLIs.
 
@@ -90,13 +91,11 @@ Six months after launch the team is debugging in production. Azure Functions Con
 
 ## Operational Story
 
-- **Preview deploys (API)**: App Service deployment slots. Staging slot URL: `https://receipt-well-api-staging.azurewebsites.net`. Deploy to staging via GitHub Actions (`slot-name: staging`), smoke-test, then run `az webapp deployment slot swap` to promote to production. Staging slot URL is public by default — protect with Basic Auth or IP restriction if needed.
-
-- **Preview deploys (frontend)**: Azure Static Web Apps automatically creates a preview environment for every pull request at a unique URL (e.g., `https://receipt-well-web-pr-42.azurestaticapps.net`). No extra configuration required — the SWA GitHub Actions workflow handles it. Preview environments are torn down automatically when the PR closes. Note: MSAL redirect URIs for the B2C app registration must include the PR preview URL pattern or be wildcard-matched; configure this in the B2C app registration before expecting auth to work in PR previews.
+- **Preview deploys**: None — no deployment slots (D1 tier), no SWA PR preview environments. All merges to `develop` deploy directly to production. Test locally before merging.
 
 - **Secrets**: Application settings stored in Azure App Service configuration (`az webapp config appsettings set`). Sensitive values (connection strings, API keys) stored in Azure Key Vault; App Service reads them via Key Vault references using Managed Identity — no secret leaves the vault. Azure B2C client IDs are not secrets; client secrets go in Key Vault. GitHub Actions uses OIDC federated credentials — no long-lived `AZURE_CLIENT_SECRET` stored in GitHub Secrets.
 
-- **Rollback**: `az webapp deployment slot swap --resource-group receipt-well-rg --name receipt-well-api --slot production --target-slot staging` re-swaps the slots — both instances remain warm, swap completes in under 30 seconds. Database migrations do not roll back automatically; design migrations to be backward-compatible (expand/contract pattern).
+- **Rollback**: No slot swap available on D1. Rollback is a redeploy of the previous build artifact: re-run the GitHub Actions workflow on the prior commit (`git revert` or re-trigger the workflow at the last good SHA). Expect 2–5 minutes of downtime during redeploy. Design schema changes to be backward-compatible so a rollback doesn't require a matching data migration reversal.
 
 - **Approval**: Human-on-irreversibles: creating or deleting resource groups, rotating the B2C client secret, dropping or recreating the Azure AI Search index, deleting a Blob Storage container. Agent-permitted: deploy to staging slot, swap slots, tail logs, update non-secret app settings, trigger a Function manually for testing.
 
@@ -115,29 +114,31 @@ Six months after launch the team is debugging in production. Azure Functions Con
 | Azure AI Search enrichment billing accumulation | Unknown unknowns | M | M | Disable built-in AI enrichment; extract via Azure OpenAI externally and store pre-computed tags |
 | West Europe regional outage takes down all services | Pre-mortem | L | H | Acceptable for MVP; document RTO expectation; revisit multi-region at post-MVP |
 | Azure lock-in limits future platform flexibility | Devil's advocate | L | H | Accept as a deliberate trade-off given existing subscription and expertise |
-| S1 tier cost overrun if usage-based scaling needed | Devil's advocate | M | M | Monitor App Service metrics; scale to P1v3 only if S1 auto-scale limit (10 instances) is hit |
-| MSAL redirect URIs missing for SWA PR preview URLs | Research finding | M | M | Add wildcard or explicit preview URL patterns to the B2C app registration before enabling PR preview auth |
+| D1 Shared tier has no SLA and shared compute | Devil's advocate | M | M | Acceptable for MVP; upgrade to B1 (dedicated) if p95 API latency degrades or uptime SLA is needed |
+| D1 has no always-on — app idles after inactivity | Research finding | H | M | First request after idle incurs a cold start (5–15s for .NET). Acceptable for MVP; add a lightweight health-check ping or upgrade to B1 if cold starts are unacceptable |
+| .NET 9 STS reaches EOL ~Nov 2026 | Research finding | L | M | Plan migration to .NET 10 LTS (expected GA Nov 2025) before EOL; App Service runtime upgrades are in-place with no downtime |
+| No deployment slots — rollback requires full redeploy | Research finding | M | M | Acceptable trade-off for cost; mitigate by keeping commits small and testing locally before merge |
 | SWA free tier bandwidth cap (100 GB/month) | Research finding | L | L | Angular bundles are typically 1–5 MB; 100 GB covers ~20k–100k page loads/month — upgrade to Standard ($9/month) if exceeded |
 
 ## Getting Started
 
 These steps assume an existing Azure subscription with Contributor access and the Azure CLI authenticated (`az login`).
 
-1. **Create the resource group and App Service Plan (S1 for slots):**
+1. **Create the resource group and App Service Plan (D1 Shared — Windows):**
    ```bash
    az group create --name receipt-well-rg --location westeurope
+   # D1 is a Windows-only tier — omit --is-linux
    az appservice plan create --name receipt-well-plan --resource-group receipt-well-rg \
-     --is-linux --sku S1
+     --sku D1
    ```
 
-2. **Create the Web App with .NET 8 runtime and a staging deployment slot:**
+2. **Create the Web App with .NET 9 runtime (GA):**
    ```bash
    az webapp create --name receipt-well-api --resource-group receipt-well-rg \
-     --plan receipt-well-plan --runtime "DOTNETCORE:8.0"
-   az webapp deployment slot create --name receipt-well-api \
-     --resource-group receipt-well-rg --slot staging
-   az webapp config set --name receipt-well-api --resource-group receipt-well-rg \
-     --always-on true
+     --plan receipt-well-plan --runtime "dotnet:9.0"
+   # Note: always-on is not available on D1 Shared tier — omit that config
+   # If the command rejects "dotnet:9.0", verify the exact string:
+   # az webapp list-runtimes --os windows | grep -i dotnet
    ```
 
 3. **Enable Managed Identity and grant access to co-located services:**
@@ -154,9 +155,9 @@ These steps assume an existing Azure subscription with Contributor access and th
      --branch develop --app-location /src/frontend --output-location dist/receipt-well \
      --login-with-github
    ```
-   This auto-generates a GitHub Actions workflow in the repo. Set `apiLocation` to empty string — the API is a separate App Service, not a SWA managed function.
+   This auto-generates a GitHub Actions workflow in the repo. Set `apiLocation` to empty string — the API is a separate App Service, not a SWA managed function. PR preview environments are disabled by default unless opted in via `staticwebapp.config.json`.
 
-5. **Wire API GitHub Actions CI/CD** using OIDC (no long-lived secrets). Use the official `azure/webapps-deploy@v3` action with `slot-name: staging` on push to `develop`, followed by a manual approval step to swap to production.
+5. **Wire API GitHub Actions CI/CD** using OIDC (no long-lived secrets). Use the official `azure/webapps-deploy@v3` action deploying directly to production (no slot) on push to `develop`. No staging slot or swap step.
 
 6. **Set up Event Grid trigger for receipt extraction:**
    ```bash

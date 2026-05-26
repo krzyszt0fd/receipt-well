@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Skill(10x-rule-review)"
+      "Skill(10x-rule-review)",
+      "Bash(cd C:\\\\Users\\\\kdudzik\\\\Projects\\\\10xDevs\\\\receipt-well *)",
+      "Bash(grep -v \"\\\\\\\\bin\\\\|\\\\\\\\obj\")",
+      "Bash(xargs ls -la)",
+      "Bash(Out-Null)",
+      "Bash(Write-Host \"Directory ready\")"
     ]
   }
 }
