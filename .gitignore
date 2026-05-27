@@ -1,0 +1,13 @@
+# 10x content
+10[xX]*
+
+# Terraform
+infra/.terraform/
+infra/.terraform.lock.hcl
+infra/terraform.tfstate
+infra/terraform.tfstate.backup
+infra/terraform.tfvars
+infra/crash.log
+
+# Claude local settings
+.claude/settings.local.json

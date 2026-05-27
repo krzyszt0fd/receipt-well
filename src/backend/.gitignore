@@ -3,8 +3,7 @@
 ##
 ## Get latest from `dotnet new gitignore`
 
-# 10x content
-10[xX]*
+
 
 # dotenv files
 .env

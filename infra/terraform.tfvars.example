@@ -1,0 +1,25 @@
+# Copy this file to terraform.tfvars and fill in your values.
+# terraform.tfvars is listed in .gitignore and must never be committed.
+
+# --- Required ---
+
+# Your GitHub username or organization name.
+# Used in the OIDC federated credential subject: repo:<github_org>/<github_repo>:ref:refs/heads/<branch>
+github_org = "your-github-username-or-org"
+
+# --- Optional overrides ---
+# All defaults match the CLI runbook names in context/changes/deployment/deployment-plan.md.
+# Uncomment and change only if you need non-default resource names.
+# If you already ran Phase 1 CLI commands, keep these at their defaults and use
+# terraform import to bring existing resources under Terraform management.
+
+# location              = "westeurope"
+# resource_group_name   = "receipt-well-rg"
+# key_vault_name        = "receipt-well-kv"
+# storage_account_name  = "receiptwellstorage"
+# app_service_plan_name = "receipt-well-plan"
+# web_app_name          = "receipt-well-api"
+# static_web_app_name   = "receipt-well-web"
+# oidc_app_registration_name = "receipt-well-github-deploy"
+# github_repo           = "receipt-well"
+# github_deploy_branch  = "develop"
