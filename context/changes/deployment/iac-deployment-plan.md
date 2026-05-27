@@ -4,25 +4,53 @@
 
 Both apps are scaffold-level (WeatherForecast endpoint + empty Angular shell). No Azure resources exist yet. The goal is to get both apps live on Azure, wire up CI/CD so every push to `develop` auto-deploys, and configure all infrastructure plumbing (Data Protection, Managed Identity, Key Vault, CORS) correctly from day one — before any business logic is added. Auth (B2C + MSAL) is wired in a dedicated final phase so it can be tested independently.
 
-**All Azure infrastructure is provisioned via Terraform** (`infra/` at repo root). No manual `az` commands are used for Phases 1 or 4.1. Phases 2, 3, 4.2–4.4, 5, and 6 remain code or portal steps.
+**All Azure infrastructure is provisioned via Terraform** (`infra/` at repo root). No manual `az` commands are used for Phases 1 or 4.1. Phases 2, 3, 4.3–4.4, and 6.5 are code changes the agent performs. Phases 5.3–5.4 and all of Phase 6.1–6.3 require the browser or Azure portal.
 
 Sources of truth: `context/foundation/infrastructure.md`, `infra/`
 
 ---
 
+## Phase Legend
+
+> **AGENT** — The agent can execute this step without human intervention (file edits, CLI commands).
+>
+> **MANUAL** — Requires the human: browser login, Azure portal clicks, or human judgement on browser output.
+>
+> **MANUAL → AGENT** — Human provides one value; the agent does the rest.
+
+---
+
 ## Phase 0 — Prerequisites
 
-> Verify before running any Terraform or `az` commands. All steps below assume these pass.
+> **MANUAL** — All checks in this phase are run by the human to confirm the local environment is ready.
+
+Verify before running any Terraform or `az` commands. All steps below assume these pass.
 
 - [ ] Azure CLI authenticated: `az login` → confirm correct subscription shown
 - [ ] Correct subscription active: `az account show --query name` → matches your commercial subscription
 - [ ] Terraform CLI installed: `terraform version` → `>= 1.9`
+- [ ] GitHub CLI authenticated: `gh auth status` → confirms access to the repo (required for Phase 4.2 automation)
 - [ ] GitHub remote configured: `git remote get-url origin` → returns the repo URL
 - [ ] Note your GitHub **org/username** and **repo name** — required for `terraform.tfvars`
 
 ---
 
+### B2C Tenant — Plan ~30 minutes before starting Phase 6
+
+> **MANUAL (portal)** — Azure AD B2C has no CLI or Terraform provider for tenant creation. These steps require the Azure portal. No automation path exists. Complete them before Phase 6.
+
+- [ ] You will create a B2C tenant in the **Europe region** in Azure portal (region is permanent — cannot be changed after creation)
+- [ ] You will register two apps: backend API (`ReceiptWell API`) and frontend SPA (`ReceiptWell Web`)
+- [ ] You will create a sign-up/sign-in user flow named `signupsignin`
+- [ ] Full step-by-step instructions are in Phase 6.1–6.3
+
+Phase 6 cannot proceed until these are done. See § [Phase 6](#phase-6--azure-b2c-tenant--auth-wiring) for details.
+
+---
+
 ## Phase 1 — Infrastructure Provisioning via Terraform
+
+> **AGENT** (except step 1.1 where you set `github_org` — see below)
 
 All resources in this phase are declared in `infra/`. A single `terraform apply` provisions:
 
@@ -36,6 +64,8 @@ All resources in this phase are declared in `infra/`. A single `terraform apply`
 - App Service app settings: `AllowedOrigins__0`, `AzureStorage__AccountName`, `AzureStorage__KeyRingContainerName`, `WEBSITE_RUN_FROM_PACKAGE`
 
 ### 1.1 Configure Variables
+
+> **MANUAL → AGENT** — The agent creates the file; you set `github_org`.
 
 ```bash
 cd infra
@@ -57,6 +87,8 @@ All other variables have defaults matching the resource names used throughout th
 
 ### 1.2 Initialise and Apply
 
+> **AGENT**
+
 ```bash
 terraform init
 terraform validate
@@ -75,6 +107,8 @@ terraform apply
 ---
 
 ### 1.3 Capture Outputs
+
+> **AGENT**
 
 ```bash
 terraform output
@@ -100,6 +134,8 @@ Note the following — they are needed in Phase 4:
 ---
 
 ## Phase 2 — Backend Code Preparation
+
+> **AGENT**
 
 Files to modify: `src/backend/Directory.Packages.props`, `src/backend/ReceiptWell.csproj`, `src/backend/Program.cs`, `src/backend/appsettings.json`
 
@@ -213,7 +249,7 @@ Add `app.UseAuthentication(); app.UseAuthorization();` in the middleware pipelin
 }
 ```
 
-> Secret values (client secrets, API keys) stay out of `appsettings.json` — they go into Key Vault and are referenced via App Service configuration Key Vault references. `AzureB2C` values are filled in Phase 6. App Service app settings (which override `appsettings.json` in production) are managed by Terraform and do not need to be re-applied manually.
+> Secret values (client secrets, API keys) stay out of `appsettings.json` — they go into Key Vault and are referenced via App Service configuration Key Vault references. `AzureB2C` values are filled in Phase 6 via Terraform. App Service app settings (which override `appsettings.json` in production) are managed by Terraform and do not need to be re-applied manually.
 
 - [ ] `appsettings.json` updated
 - [ ] No secrets committed to git
@@ -221,6 +257,8 @@ Add `app.UseAuthentication(); app.UseAuthorization();` in the middleware pipelin
 ---
 
 ## Phase 3 — Frontend Code Preparation
+
+> **AGENT**
 
 Files to create/modify: `src/frontend/src/environments/`, `src/frontend/staticwebapp.config.json`, `src/frontend/angular.json`
 
@@ -306,22 +344,28 @@ Already provisioned by Terraform in Phase 1. The App Registration (`receipt-well
 
 ### 4.2 Store Values in GitHub Secrets
 
-In GitHub → repo → Settings → Secrets and variables → Actions, add four secrets using values from `terraform output`:
+> **AGENT** — Uses `gh secret set` to push Terraform outputs directly into GitHub Actions secrets. No portal access required.
 
-| Secret name | Source |
-|---|---|
-| `AZURE_CLIENT_ID` | `terraform output azure_client_id` |
-| `AZURE_TENANT_ID` | `terraform output azure_tenant_id` |
-| `AZURE_SUBSCRIPTION_ID` | `terraform output azure_subscription_id` |
-| `AZURE_STATIC_WEB_APPS_API_TOKEN` | `terraform output -raw static_web_app_api_key` |
+Run from the repo root after `terraform apply` has completed:
 
+```bash
+gh secret set AZURE_CLIENT_ID              --body "$(terraform -chdir=infra output -raw azure_client_id)"
+gh secret set AZURE_TENANT_ID              --body "$(terraform -chdir=infra output -raw azure_tenant_id)"
+gh secret set AZURE_SUBSCRIPTION_ID        --body "$(terraform -chdir=infra output -raw azure_subscription_id)"
+gh secret set AZURE_STATIC_WEB_APPS_API_TOKEN --body "$(terraform -chdir=infra output -raw static_web_app_api_key)"
+```
+
+> **Prerequisite**: `gh auth status` must pass (checked in Phase 0). If the CLI is not authenticated, fall back to the portal: GitHub → repo → Settings → Secrets and variables → Actions, and add the four secrets using values from `terraform output`.
+>
 > `AZURE_CLIENT_ID` is the App Registration's Application (client) ID — **not** the service principal object ID. `terraform output azure_client_id` returns the correct value.
 
-- [ ] Four GitHub secrets added
+- [ ] Four GitHub secrets added (via CLI or portal fallback)
 
 ---
 
 ### 4.3 Create Backend Deploy Workflow
+
+> **AGENT**
 
 **`.github/workflows/backend-deploy.yml`**:
 
@@ -368,15 +412,24 @@ jobs:
           app-name: receipt-well-api
           resource-group-name: receipt-well-rg
           package: ./publish
+
+      - name: Smoke test
+        run: |
+          sleep 30
+          curl --fail https://receipt-well-api.azurewebsites.net/weatherforecast
 ```
 
 > **Edge case — D1 Shared cold start during deploy**: The D1 tier has no deployment slot. Expect a 5–30 s gap where the app is unreachable while the new package is being swapped. This is acceptable at MVP.
+>
+> The `Smoke test` step runs after every deploy to `develop`, catching regressions automatically. The 30 s sleep covers the cold start on D1.
 
 - [ ] Workflow file created at `.github/workflows/backend-deploy.yml`
 
 ---
 
 ### 4.4 Create SWA Deploy Workflow
+
+> **AGENT**
 
 Because the SWA was provisioned by Terraform without GitHub repo linking (no PAT required), no workflow is auto-generated. Create it manually:
 
@@ -427,6 +480,8 @@ jobs:
 
 ### 5.1 Trigger Deploy
 
+> **AGENT**
+
 > Wait at least 3 minutes after `terraform apply` before pushing — RBAC role assignments take 1–5 minutes to propagate. A deploy that arrives too soon may fail with a 403 on Blob Storage when Data Protection tries to write `keys.xml`.
 
 ```bash
@@ -443,10 +498,9 @@ git push origin develop
 
 ### 5.2 Backend Smoke Tests
 
-```bash
-# Health — default route
-curl https://receipt-well-api.azurewebsites.net/weatherforecast
+> **AGENT** — The CI workflow (4.3) runs the `/weatherforecast` check automatically. Run the blob check locally to verify Data Protection wired up correctly.
 
+```bash
 # Verify Data Protection key ring was created in blob storage
 az storage blob list \
   --account-name receiptwellstorage \
@@ -458,13 +512,15 @@ az storage blob list \
 
 > **Edge case — cold start on first hit**: D1 Shared idles after inactivity. The first request after a cold start can take 5–15 s. If it times out, retry once. If it 503s repeatedly, check App Service logs with `az webapp log tail --resource-group receipt-well-rg --name receipt-well-api`.
 
-- [ ] `/weatherforecast` returns JSON from Azure URL
+- [ ] CI smoke test step (`/weatherforecast`) passes green in GitHub Actions
 - [ ] `keys.xml` blob exists in `data-protection` container
 - [ ] No 500 errors in App Service log tail
 
 ---
 
 ### 5.3 Frontend Smoke Tests
+
+> **MANUAL** — Browser required.
 
 - [ ] SWA URL (from `terraform output static_web_app_hostname`) loads the Angular shell
 - [ ] Navigating to a non-root path (e.g. `/dashboard`) returns the Angular shell (not 404) — proves `navigationFallback` works
@@ -473,6 +529,8 @@ az storage blob list \
 ---
 
 ### 5.4 CORS Smoke Test
+
+> **MANUAL** — Browser DevTools required.
 
 Open browser DevTools Console on the SWA URL and run:
 
@@ -488,9 +546,11 @@ fetch('https://receipt-well-api.azurewebsites.net/weatherforecast')
 
 ## Phase 6 — Azure B2C Tenant + Auth Wiring
 
-> Complete this phase only after Phase 5 smoke tests pass. B2C tenant creation requires Azure portal access. B2C is not provisioned by Terraform — it lives in a separate tenant and requires portal-based setup.
+> Complete this phase only after Phase 5 smoke tests pass.
 
 ### 6.1 Create B2C Tenant (Portal — manual)
+
+> **MANUAL (portal)** — No CLI or Terraform path exists. See Phase 0 prerequisites for time estimate.
 
 1. Go to Azure Portal → Create a resource → Azure Active Directory B2C
 2. **Region: Europe** (cannot be changed after creation)
@@ -505,6 +565,8 @@ fetch('https://receipt-well-api.azurewebsites.net/weatherforecast')
 ---
 
 ### 6.2 Register Applications in B2C
+
+> **MANUAL (portal)**
 
 **Backend API registration:**
 - Name: `ReceiptWell API`
@@ -528,6 +590,8 @@ fetch('https://receipt-well-api.azurewebsites.net/weatherforecast')
 
 ### 6.3 Create Sign-Up/Sign-In User Flow
 
+> **MANUAL (portal)**
+
 In B2C portal:
 - User flows → New user flow → Sign up and sign in → Recommended
 - Name: `signupsignin` → final policy ID: `B2C_1_signupsignin`
@@ -539,27 +603,55 @@ In B2C portal:
 
 ---
 
-### 6.4 Update App Service Config with B2C Values
+### 6.4 Update App Service Config with B2C Values via Terraform
 
-```bash
-B2C_AUTHORITY="https://receiptwellb2c.b2clogin.com/receiptwellb2c.onmicrosoft.com/B2C_1_signupsignin/v2.0/"
-B2C_CLIENT_ID="<backend-app-registration-client-id>"
+> **AGENT** — Add the B2C values as variables in `infra/variables.tf`, extend `app_settings` in `infra/app_service.tf`, then re-run `terraform apply`. This keeps all infra state in Terraform rather than split across `az` CLI calls.
 
-az webapp config appsettings set \
-  --name receipt-well-api \
-  --resource-group receipt-well-rg \
-  --settings \
-    AzureB2C__Authority="$B2C_AUTHORITY" \
-    AzureB2C__ClientId="$B2C_CLIENT_ID"
+**`infra/variables.tf`** — add:
+
+```hcl
+variable "b2c_authority" {
+  description = "Azure B2C authority URL including user flow"
+  default     = ""
+}
+
+variable "b2c_client_id" {
+  description = "Backend API app registration client ID in B2C"
+  default     = ""
+}
 ```
 
-> Alternatively, add these as Terraform variables and run `terraform apply` — the `app_settings` block in `infra/app_service.tf` can be extended with the B2C values once they are known. Either approach is valid.
+**`infra/app_service.tf`** — extend `app_settings` block:
 
-- [ ] App Service updated with B2C authority and client ID
+```hcl
+"AzureB2C__Authority" = var.b2c_authority
+"AzureB2C__ClientId"  = var.b2c_client_id
+```
+
+**`infra/terraform.tfvars`** — add (after B2C values are known from 6.2–6.3):
+
+```hcl
+b2c_authority = "https://receiptwellb2c.b2clogin.com/receiptwellb2c.onmicrosoft.com/B2C_1_signupsignin/v2.0/"
+b2c_client_id = "<backend-app-registration-client-id>"
+```
+
+Then apply:
+
+```bash
+terraform plan   # should show 1 resource to update: the web app app_settings
+terraform apply
+```
+
+- [ ] `variables.tf` extended with B2C vars
+- [ ] `app_service.tf` `app_settings` extended
+- [ ] `terraform.tfvars` updated with real values (not committed — gitignored)
+- [ ] `terraform apply` updates App Service settings
 
 ---
 
 ### 6.5 Add MSAL to Angular
+
+> **Code changes — AGENT. Browser login test — MANUAL.**
 
 Install packages:
 
@@ -584,7 +676,7 @@ Wire `MsalModule` in `src/frontend/src/app/app.config.ts` using the environment 
 - [ ] `@azure/msal-angular` and `@azure/msal-browser` installed
 - [ ] Environment files populated with real B2C values
 - [ ] MSAL providers added to `app.config.ts`
-- [ ] Login flow tested end-to-end in browser
+- [ ] **MANUAL** — Login flow tested end-to-end in browser
 
 ---
 
@@ -615,39 +707,40 @@ To move to a shared backend (team or CI use), replace the `backend "local"` bloc
 
 ## Files Created / Modified
 
-| File | Action |
-|---|---|
-| `infra/main.tf` | Terraform block, providers, local backend, data sources |
-| `infra/variables.tf` | All input variable declarations |
-| `infra/outputs.tf` | All outputs; post-apply actions documented inline |
-| `infra/resource_group.tf` | Resource group |
-| `infra/key_vault.tf` | Key Vault (RBAC) + deployer Key Vault Administrator role |
-| `infra/storage.tf` | Storage account + data-protection container |
-| `infra/app_service.tf` | App Service Plan + Windows Web App + app_settings |
-| `infra/static_web_app.tf` | Static Web App (Free tier, no GitHub linking) |
-| `infra/role_assignments.tf` | Managed Identity role assignments |
-| `infra/oidc.tf` | App Registration, Service Principal, federated credential, Contributor role |
-| `infra/terraform.tfvars.example` | Variable template (committed); `terraform.tfvars` is gitignored |
-| `.gitignore` | Terraform state and cache exclusions |
-| `src/backend/Directory.Packages.props` | Add 3 package versions |
-| `src/backend/ReceiptWell.csproj` | Add 3 PackageReference entries |
-| `src/backend/Program.cs` | Add Data Protection, CORS, JWT Bearer, middleware pipeline |
-| `src/backend/appsettings.json` | Add AllowedOrigins, AzureStorage, AzureB2C config keys |
-| `src/frontend/src/environments/environment.ts` | Create with dev defaults |
-| `src/frontend/src/environments/environment.prod.ts` | Create with prod Azure URLs |
-| `src/frontend/angular.json` | Add fileReplacements for production build |
-| `src/frontend/staticwebapp.config.json` | Create SPA routing fallback |
-| `.github/workflows/backend-deploy.yml` | Create OIDC backend deploy workflow |
-| `.github/workflows/frontend-deploy.yml` | Create SWA frontend deploy workflow (manual — no auto-generated file) |
-| `src/frontend/package.json` | Add MSAL packages (Phase 6) |
-| `src/frontend/src/app/app.config.ts` | Wire MSAL providers (Phase 6) |
+| File | Action | Who |
+|---|---|---|
+| `infra/main.tf` | Terraform block, providers, local backend, data sources | AGENT |
+| `infra/variables.tf` | All input variable declarations + B2C vars (Phase 6.4) | AGENT |
+| `infra/outputs.tf` | All outputs; post-apply actions documented inline | AGENT |
+| `infra/resource_group.tf` | Resource group | AGENT |
+| `infra/key_vault.tf` | Key Vault (RBAC) + deployer Key Vault Administrator role | AGENT |
+| `infra/storage.tf` | Storage account + data-protection container | AGENT |
+| `infra/app_service.tf` | App Service Plan + Windows Web App + app_settings + B2C vars | AGENT |
+| `infra/static_web_app.tf` | Static Web App (Free tier, no GitHub linking) | AGENT |
+| `infra/role_assignments.tf` | Managed Identity role assignments | AGENT |
+| `infra/oidc.tf` | App Registration, Service Principal, federated credential, Contributor role | AGENT |
+| `infra/terraform.tfvars.example` | Variable template (committed); `terraform.tfvars` is gitignored | AGENT |
+| `.gitignore` | Terraform state and cache exclusions | AGENT |
+| `src/backend/Directory.Packages.props` | Add 3 package versions | AGENT |
+| `src/backend/ReceiptWell.csproj` | Add 3 PackageReference entries | AGENT |
+| `src/backend/Program.cs` | Add Data Protection, CORS, JWT Bearer, middleware pipeline | AGENT |
+| `src/backend/appsettings.json` | Add AllowedOrigins, AzureStorage, AzureB2C config keys | AGENT |
+| `src/frontend/src/environments/environment.ts` | Create with dev defaults | AGENT |
+| `src/frontend/src/environments/environment.prod.ts` | Create with prod Azure URLs | AGENT |
+| `src/frontend/angular.json` | Add fileReplacements for production build | AGENT |
+| `src/frontend/staticwebapp.config.json` | Create SPA routing fallback | AGENT |
+| `.github/workflows/backend-deploy.yml` | Create OIDC backend deploy workflow + smoke test step | AGENT |
+| `.github/workflows/frontend-deploy.yml` | Create SWA frontend deploy workflow | AGENT |
+| `src/frontend/package.json` | Add MSAL packages (Phase 6) | AGENT |
+| `src/frontend/src/app/app.config.ts` | Wire MSAL providers (Phase 6) | AGENT |
+| B2C tenant + app registrations + user flow | Portal setup | MANUAL |
 
 ---
 
 ## Verification Checklist (End State)
 
 - [ ] `terraform output` shows all 10 outputs with no errors
-- [ ] `https://receipt-well-api.azurewebsites.net/weatherforecast` returns JSON
+- [ ] `https://receipt-well-api.azurewebsites.net/weatherforecast` returns JSON (CI smoke test green)
 - [ ] `https://<swa-hostname>.azurestaticapps.net` loads Angular shell
 - [ ] SPA routing fallback works (direct nav to sub-path returns shell, not 404)
 - [ ] CORS: fetch from SWA URL to API URL succeeds in browser console
