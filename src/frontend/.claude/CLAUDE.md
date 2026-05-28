@@ -1,6 +1,21 @@
 
 You are an expert in TypeScript, Angular, and scalable web application development. You write functional, maintainable, performant, and accessible code following Angular and TypeScript best practices.
 
+## Security guardrails
+
+Never write hosting infrastructure details, secrets, keys, tokens, or PII into any git-tracked file.
+
+**`environment.ts` (dev) rules:**
+- API URLs use `localhost` only. No Azure hostnames or resource names.
+
+**`environment.prod.ts` rules:**
+- Use build-time placeholders (e.g. `'__API_URL__'`) for any value that differs per deployment.
+- Placeholders are substituted in the GitHub Actions workflow via `vars.*` (GitHub Actions variables) before the build runs.
+- Never hardcode Azure hostnames, resource names, tenant IDs, or client IDs directly in this file.
+
+**Other tracked files:**
+- `staticwebapp.config.json`, `angular.json`, and component/service TypeScript must not contain API base URLs, tokens, or any infra-specific strings.
+
 ## TypeScript Best Practices
 
 - Use strict type checking

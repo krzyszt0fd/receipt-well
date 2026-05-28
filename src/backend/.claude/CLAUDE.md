@@ -2,6 +2,20 @@
 
 ASP.NET Core 9.0 minimal API, C#.
 
+## Security guardrails
+
+Never write hosting infrastructure details, secrets, keys, tokens, or PII into any git-tracked file.
+
+**`appsettings.json` rules:**
+- Contains only structural keys with empty or localhost defaults — no resource names, no account names, no hostnames, no tenant/subscription IDs.
+- Production values are injected by Azure App Service app settings (managed by Terraform) and override `appsettings.json` at runtime.
+- Local values that must not be committed go in `dotnet user-secrets` (`UserSecretsId` is set in `ReceiptWell.csproj`).
+
+**`appsettings.Development.json` rules:**
+- Same restrictions as `appsettings.json`. Not gitignored — treat it as public.
+
+If a value belongs in config, read it from `IConfiguration`. Never hardcode resource names, URLs, or account identifiers in C# source files.
+
 ## Conventions
 
 - **Namespace root:** `ReceiptWell` (not `receipt_well` — override the scaffolded default)
