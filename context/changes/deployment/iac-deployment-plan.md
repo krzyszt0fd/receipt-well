@@ -2,7 +2,7 @@
 
 ## Context
 
-Both apps are scaffold-level (WeatherForecast endpoint + empty Angular shell). No Azure resources exist yet. The goal is to get both apps live on Azure, wire up CI/CD so every push to `develop` auto-deploys, and configure all infrastructure plumbing (Data Protection, Managed Identity, Key Vault, CORS) correctly from day one — before any business logic is added. Auth (B2C + MSAL) is wired in a dedicated final phase so it can be tested independently.
+Both apps are scaffold-level (WeatherForecast endpoint + empty Angular shell). No Azure resources exist yet. The goal is to get both apps live on Azure, wire up CI/CD so every push to `develop` auto-deploys, and configure all infrastructure plumbing (Data Protection, Managed Identity, Key Vault, CORS) correctly from day one — before any business logic is added. Auth (Entra External ID + MSAL) is wired in a dedicated final phase so it can be tested independently.
 
 **All Azure infrastructure is provisioned via Terraform** (`infra/` at repo root). No manual `az` commands are used for Phases 1 or 4.1. Phases 2, 3, 4.3–4.4, and 6.5 are code changes the agent performs. Phases 5.3–5.4 and all of Phase 6.1–6.3 require the browser or Azure portal.
 
@@ -35,16 +35,18 @@ Verify before running any Terraform or `az` commands. All steps below assume the
 
 ---
 
-### B2C Tenant — Plan ~30 minutes before starting Phase 6
+### Entra External ID Tenant — Plan ~30 minutes before starting Phase 6
 
-> **MANUAL (portal)** — Azure AD B2C has no CLI or Terraform provider for tenant creation. These steps require the Azure portal. No automation path exists. Complete them before Phase 6.
+> **MANUAL (portal)** — Microsoft Entra External ID has no CLI or Terraform provider for tenant creation. These steps require the Azure portal or Entra admin center. No automation path exists. Complete them before Phase 6.
 
-- [ ] You will create a B2C tenant in the **Europe region** in Azure portal (region is permanent — cannot be changed after creation)
+- [ ] You will create an External tenant at [entra.microsoft.com](https://entra.microsoft.com) → External Identities → External tenants → Create a new external tenant
+- [ ] Tenant subdomain: `receiptwellext` → domain: `receiptwellext.onmicrosoft.com`
+- [ ] Region: **Europe** (permanent — cannot be changed after creation)
 - [ ] You will register two apps: backend API (`ReceiptWell API`) and frontend SPA (`ReceiptWell Web`)
-- [ ] You will create a sign-up/sign-in user flow named `signupsignin`
+- [ ] You will create a sign-up/sign-in user flow
 - [ ] Full step-by-step instructions are in Phase 6.1–6.3
 
-Phase 6 cannot proceed until these are done. See § [Phase 6](#phase-6--azure-b2c-tenant--auth-wiring) for details.
+Phase 6 cannot proceed until these are done. See § [Phase 6](#phase-6--entra-external-id-tenant--auth-wiring) for details.
 
 ---
 
@@ -212,8 +214,8 @@ Add `app.UseCors()` before `app.UseAuthentication()` in the middleware pipeline.
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.Authority = builder.Configuration["AzureB2C:Authority"];
-        options.Audience = builder.Configuration["AzureB2C:ClientId"];
+        options.Authority = builder.Configuration["AzureExternalId:Authority"];
+        options.Audience = builder.Configuration["AzureExternalId:ClientId"];
     });
 builder.Services.AddAuthorization();
 ```
@@ -242,14 +244,14 @@ Add `app.UseAuthentication(); app.UseAuthorization();` in the middleware pipelin
     "AccountName": "receiptwellstorage",
     "KeyRingContainerName": "data-protection"
   },
-  "AzureB2C": {
+  "AzureExternalId": {
     "Authority": "",
     "ClientId": ""
   }
 }
 ```
 
-> Secret values (client secrets, API keys) stay out of `appsettings.json` — they go into Key Vault and are referenced via App Service configuration Key Vault references. `AzureB2C` values are filled in Phase 6 via Terraform. App Service app settings (which override `appsettings.json` in production) are managed by Terraform and do not need to be re-applied manually.
+> Secret values (client secrets, API keys) stay out of `appsettings.json` — they go into Key Vault and are referenced via App Service configuration Key Vault references. `AzureExternalId` values are filled in Phase 6 via Terraform. App Service app settings (which override `appsettings.json` in production) are managed by Terraform and do not need to be re-applied manually.
 
 - [ ] `appsettings.json` updated
 - [ ] No secrets committed to git
@@ -270,10 +272,10 @@ Files to create/modify: `src/frontend/src/environments/`, `src/frontend/staticwe
 export const environment = {
   production: false,
   apiUrl: 'https://localhost:7000',
-  b2c: {
-    tenantName: '',
+  externalId: {
+    authority: '',        // https://<tenant>.ciamlogin.com/<tenant>.onmicrosoft.com/v2.0
+    knownAuthority: '',   // <tenant>.ciamlogin.com
     clientId: '',
-    userFlowSignUpSignIn: 'B2C_1_signupsignin',
     apiScope: ''
   }
 };
@@ -285,10 +287,10 @@ export const environment = {
 export const environment = {
   production: true,
   apiUrl: 'https://receipt-well-api.azurewebsites.net',
-  b2c: {
-    tenantName: '',
+  externalId: {
+    authority: '',        // https://<tenant>.ciamlogin.com/<tenant>.onmicrosoft.com/v2.0
+    knownAuthority: '',   // <tenant>.ciamlogin.com
     clientId: '',
-    userFlowSignUpSignIn: 'B2C_1_signupsignin',
     apiScope: ''
   }
 };
@@ -305,7 +307,7 @@ Wire `fileReplacements` in `angular.json` under `architect.build.configurations.
 ]
 ```
 
-> B2C values (`tenantName`, `clientId`, `apiScope`) are filled in Phase 6 after the B2C tenant is created. Files are committed with empty strings.
+> Entra External ID values (`authority`, `knownAuthority`, `clientId`, `apiScope`) are filled in Phase 6 after the External ID tenant is created. Files are committed with empty strings.
 
 - [ ] Environment files created
 - [ ] `fileReplacements` added to `angular.json`
@@ -544,42 +546,47 @@ fetch('https://receipt-well-api.azurewebsites.net/weatherforecast')
 
 ---
 
-## Phase 6 — Azure B2C Tenant + Auth Wiring
+## Phase 6 — Entra External ID Tenant + Auth Wiring
 
 > Complete this phase only after Phase 5 smoke tests pass.
 
-### 6.1 Create B2C Tenant (Portal — manual)
+### 6.1 Create Entra External ID Tenant (Portal — manual)
 
 > **MANUAL (portal)** — No CLI or Terraform path exists. See Phase 0 prerequisites for time estimate.
 
-1. Go to Azure Portal → Create a resource → Azure Active Directory B2C
-2. **Region: Europe** (cannot be changed after creation)
-3. Tenant name: `receiptwellb2c` → domain: `receiptwellb2c.onmicrosoft.com`
-4. Link the tenant to your commercial subscription
+1. Go to [entra.microsoft.com](https://entra.microsoft.com) → External Identities → External tenants → **Create a new external tenant**
+2. Tenant type: **External** (customer-facing CIAM)
+3. **Region: Europe** (cannot be changed after creation)
+4. Tenant subdomain: `receiptwellext` → domain: `receiptwellext.onmicrosoft.com`
+5. Link the tenant to your commercial subscription
 
-> **Hard constraint**: B2C tenant region is permanent. A tenant created outside Europe cannot be moved — it must be deleted and recreated.
+> **Hard constraint**: Entra External ID tenant region is permanent. A tenant created outside Europe cannot be moved — it must be deleted and recreated.
 
-- [ ] B2C tenant created in Europe region
+- [ ] External tenant created in Europe region
 - [ ] Tenant linked to commercial subscription
 
 ---
 
-### 6.2 Register Applications in B2C
+### 6.2 Register Applications in Entra External ID
 
 > **MANUAL (portal)**
 
+Switch to the external tenant directory: Azure portal → switch directory → `receiptwellext.onmicrosoft.com` (or open the tenant-specific admin URL from the Entra portal).
+
 **Backend API registration:**
+- App registrations → New registration
 - Name: `ReceiptWell API`
-- Supported account types: Accounts in this organization directory only
+- Supported account types: Accounts in this organizational directory only
 - Expose an API → add scope: `access_as_user`
-- Note the **Application (client) ID** → this is `AzureB2C__ClientId` in App Service config
+- Note the **Application (client) ID** → this is `AzureExternalId__ClientId` in App Service config
 
 **Frontend SPA registration:**
+- App registrations → New registration
 - Name: `ReceiptWell Web`
 - Platform: Single-page application
 - Redirect URI: `https://receipt-well-web.azurestaticapps.net`
 - Also add `http://localhost:4200` for local development
-- API permissions: grant `access_as_user` scope from the backend registration
+- API permissions → Add a permission → My APIs → grant `access_as_user` scope from the backend registration
 - Note the **Application (client) ID**
 
 - [ ] Backend API registered
@@ -592,31 +599,32 @@ fetch('https://receipt-well-api.azurewebsites.net/weatherforecast')
 
 > **MANUAL (portal)**
 
-In B2C portal:
-- User flows → New user flow → Sign up and sign in → Recommended
-- Name: `signupsignin` → final policy ID: `B2C_1_signupsignin`
-- Identity providers: Email signup
+In the Entra External ID admin center (still inside the external tenant):
+- User flows → New user flow → **Sign up and sign in**
+- Identity providers: **Email with password** (or Email one-time passcode)
 - User attributes to collect: Email Address, Display Name
 
+> The user flow name does **not** appear in the authority URL — there is no policy string to embed. The authority is simply the tenant endpoint (unlike the legacy B2C model).
+
 - [ ] User flow created
-- [ ] Tested via B2C "Run user flow" panel — login completes successfully
+- [ ] Tested via the "Run user flow" panel — login completes successfully
 
 ---
 
-### 6.4 Update App Service Config with B2C Values via Terraform
+### 6.4 Update App Service Config with Entra External ID Values via Terraform
 
-> **AGENT** — Add the B2C values as variables in `infra/variables.tf`, extend `app_settings` in `infra/app_service.tf`, then re-run `terraform apply`. This keeps all infra state in Terraform rather than split across `az` CLI calls.
+> **AGENT** — Add the Entra External ID values as variables in `infra/variables.tf`, extend `app_settings` in `infra/app_service.tf`, then re-run `terraform apply`. This keeps all infra state in Terraform rather than split across `az` CLI calls.
 
 **`infra/variables.tf`** — add:
 
 ```hcl
-variable "b2c_authority" {
-  description = "Azure B2C authority URL including user flow"
+variable "external_id_authority" {
+  description = "Entra External ID authority URL (ciamlogin.com endpoint)"
   default     = ""
 }
 
-variable "b2c_client_id" {
-  description = "Backend API app registration client ID in B2C"
+variable "external_id_client_id" {
+  description = "Backend API app registration client ID in Entra External ID"
   default     = ""
 }
 ```
@@ -624,15 +632,15 @@ variable "b2c_client_id" {
 **`infra/app_service.tf`** — extend `app_settings` block:
 
 ```hcl
-"AzureB2C__Authority" = var.b2c_authority
-"AzureB2C__ClientId"  = var.b2c_client_id
+"AzureExternalId__Authority" = var.external_id_authority
+"AzureExternalId__ClientId"  = var.external_id_client_id
 ```
 
-**`infra/terraform.tfvars`** — add (after B2C values are known from 6.2–6.3):
+**`infra/terraform.tfvars`** — add (after values are known from 6.2):
 
 ```hcl
-b2c_authority = "https://receiptwellb2c.b2clogin.com/receiptwellb2c.onmicrosoft.com/B2C_1_signupsignin/v2.0/"
-b2c_client_id = "<backend-app-registration-client-id>"
+external_id_authority = "https://receiptwellext.ciamlogin.com/receiptwellext.onmicrosoft.com/v2.0"
+external_id_client_id = "<backend-app-registration-client-id>"
 ```
 
 Then apply:
@@ -642,7 +650,7 @@ terraform plan   # should show 1 resource to update: the web app app_settings
 terraform apply
 ```
 
-- [ ] `variables.tf` extended with B2C vars
+- [ ] `variables.tf` extended with Entra External ID vars
 - [ ] `app_service.tf` `app_settings` extended
 - [ ] `terraform.tfvars` updated with real values (not committed — gitignored)
 - [ ] `terraform apply` updates App Service settings
@@ -660,22 +668,35 @@ cd src/frontend
 npm install @azure/msal-angular @azure/msal-browser
 ```
 
-Update `environment.prod.ts` with B2C values:
+Update `environment.prod.ts` with Entra External ID values:
 
 ```typescript
-b2c: {
-  tenantName: 'receiptwellb2c',
+externalId: {
+  authority: 'https://receiptwellext.ciamlogin.com/receiptwellext.onmicrosoft.com/v2.0',
+  knownAuthority: 'receiptwellext.ciamlogin.com',
   clientId: '<frontend-spa-client-id>',
-  userFlowSignUpSignIn: 'B2C_1_signupsignin',
-  apiScope: 'https://receiptwellb2c.onmicrosoft.com/receiptwell-api/access_as_user'
+  apiScope: 'https://receiptwellext.onmicrosoft.com/receiptwell-api/access_as_user'
 }
 ```
 
-Wire `MsalModule` in `src/frontend/src/app/app.config.ts` using the environment values.
+Wire `MsalModule` in `src/frontend/src/app/app.config.ts`:
+
+```typescript
+const msalConfig: Configuration = {
+  auth: {
+    clientId: environment.externalId.clientId,
+    authority: environment.externalId.authority,
+    knownAuthorities: [environment.externalId.knownAuthority],
+    redirectUri: '/'
+  }
+};
+```
+
+> `knownAuthorities` is required because `ciamlogin.com` is not in MSAL's default trusted host list. Omitting it causes a `ClientConfigurationError` at runtime.
 
 - [ ] `@azure/msal-angular` and `@azure/msal-browser` installed
-- [ ] Environment files populated with real B2C values
-- [ ] MSAL providers added to `app.config.ts`
+- [ ] Environment files populated with real Entra External ID values
+- [ ] MSAL providers added to `app.config.ts` with `knownAuthorities`
 - [ ] **MANUAL** — Login flow tested end-to-end in browser
 
 ---
@@ -692,7 +713,9 @@ Wire `MsalModule` in `src/frontend/src/app/app.config.ts` using the environment 
 | SWA deploy fails: `index.html not found in dist/frontend/browser` | Wrong `output_location` in the workflow | Angular project name in `angular.json` is `frontend`; output path is `dist/frontend/browser` — update the workflow |
 | CORS error from browser | `AllowedOrigins` mismatch | The SWA hostname in `AllowedOrigins__0` is set by Terraform from `azurerm_static_web_app.web.default_host_name`. Verify it matches exactly (no trailing slash) with `terraform output static_web_app_hostname` |
 | `az webapp log tail` drops connection | Known D1 Shared limitation noted in `infrastructure.md` | Use Azure portal → App Service → Log stream as fallback |
-| B2C login loop / redirect_uri mismatch | Redirect URI not registered in SPA app registration | Add exact redirect URI in B2C portal → SPA registration → Authentication |
+| External ID login loop / redirect_uri mismatch | Redirect URI not registered in SPA app registration | Add exact redirect URI in Entra External ID admin center → SPA registration → Authentication |
+| `AADSTS500011` — resource principal not found | API scope URI mismatch between frontend and backend registrations | Verify `apiScope` in `environment.prod.ts` matches exactly the URI exposed in the backend app registration (Entra External ID admin center → ReceiptWell API → Expose an API) |
+| `ClientConfigurationError: knownAuthority` at MSAL init | `knownAuthorities` omitted from MSAL config — `ciamlogin.com` is not in MSAL's default trusted list | Add `knownAuthorities: [environment.externalId.knownAuthority]` to the MSAL `auth` config block |
 | Need to import existing resources (Phase 1 CLI commands already ran) | Resources exist in Azure but not in Terraform state | Run `terraform import` commands listed in the infra README; then `terraform plan` to verify zero diff before applying |
 
 ---
@@ -710,12 +733,12 @@ To move to a shared backend (team or CI use), replace the `backend "local"` bloc
 | File | Action | Who |
 |---|---|---|
 | `infra/main.tf` | Terraform block, providers, local backend, data sources | AGENT |
-| `infra/variables.tf` | All input variable declarations + B2C vars (Phase 6.4) | AGENT |
+| `infra/variables.tf` | All input variable declarations + Entra External ID vars (Phase 6.4) | AGENT |
 | `infra/outputs.tf` | All outputs; post-apply actions documented inline | AGENT |
 | `infra/resource_group.tf` | Resource group | AGENT |
 | `infra/key_vault.tf` | Key Vault (RBAC) + deployer Key Vault Administrator role | AGENT |
 | `infra/storage.tf` | Storage account + data-protection container | AGENT |
-| `infra/app_service.tf` | App Service Plan + Windows Web App + app_settings + B2C vars | AGENT |
+| `infra/app_service.tf` | App Service Plan + Windows Web App + app_settings + Entra External ID vars | AGENT |
 | `infra/static_web_app.tf` | Static Web App (Free tier, no GitHub linking) | AGENT |
 | `infra/role_assignments.tf` | Managed Identity role assignments | AGENT |
 | `infra/oidc.tf` | App Registration, Service Principal, federated credential, Contributor role | AGENT |
@@ -724,7 +747,7 @@ To move to a shared backend (team or CI use), replace the `backend "local"` bloc
 | `src/backend/Directory.Packages.props` | Add 3 package versions | AGENT |
 | `src/backend/ReceiptWell.csproj` | Add 3 PackageReference entries | AGENT |
 | `src/backend/Program.cs` | Add Data Protection, CORS, JWT Bearer, middleware pipeline | AGENT |
-| `src/backend/appsettings.json` | Add AllowedOrigins, AzureStorage, AzureB2C config keys | AGENT |
+| `src/backend/appsettings.json` | Add AllowedOrigins, AzureStorage, AzureExternalId config keys | AGENT |
 | `src/frontend/src/environments/environment.ts` | Create with dev defaults | AGENT |
 | `src/frontend/src/environments/environment.prod.ts` | Create with prod Azure URLs | AGENT |
 | `src/frontend/angular.json` | Add fileReplacements for production build | AGENT |
@@ -732,8 +755,8 @@ To move to a shared backend (team or CI use), replace the `backend "local"` bloc
 | `.github/workflows/backend-deploy.yml` | Create OIDC backend deploy workflow + smoke test step | AGENT |
 | `.github/workflows/frontend-deploy.yml` | Create SWA frontend deploy workflow | AGENT |
 | `src/frontend/package.json` | Add MSAL packages (Phase 6) | AGENT |
-| `src/frontend/src/app/app.config.ts` | Wire MSAL providers (Phase 6) | AGENT |
-| B2C tenant + app registrations + user flow | Portal setup | MANUAL |
+| `src/frontend/src/app/app.config.ts` | Wire Entra External ID MSAL providers with `knownAuthorities` (Phase 6) | AGENT |
+| Entra External ID tenant + app registrations + user flow | Portal setup | MANUAL |
 
 ---
 
@@ -748,4 +771,4 @@ To move to a shared backend (team or CI use), replace the `backend "local"` bloc
 - [ ] Managed Identity: App Service has no connection strings — all Azure access via identity
 - [ ] CI/CD: push to `develop` auto-deploys both apps within ~5 minutes
 - [ ] `terraform plan` after a successful deploy shows zero changes (no drift)
-- [ ] B2C login flow completes and returns a JWT (Phase 6)
+- [ ] Entra External ID login flow completes and returns a JWT (Phase 6)
