@@ -44,6 +44,8 @@ resource "azurerm_windows_web_app" "api" {
     "AllowedOrigins__0"                  = "https://${azurerm_static_web_app.web.default_host_name}"
     "AzureStorage__AccountName"          = var.storage_account_name
     "AzureStorage__KeyRingContainerName" = "data-protection"
+    "AzureExternalId__Authority" = var.external_id_authority
+    "AzureExternalId__ClientId"  = var.external_id_client_id
     # Required by azure/webapps-deploy@v3 for zip package deployment from GitHub Actions.
     "WEBSITE_RUN_FROM_PACKAGE" = "1"
   }

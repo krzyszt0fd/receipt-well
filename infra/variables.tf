@@ -62,3 +62,15 @@ variable "github_deploy_branch" {
   default     = "develop"
   description = "Branch name for the GitHub Actions OIDC federated credential subject claim. Must match exactly: repo:<org>/<repo>:ref:refs/heads/<branch>."
 }
+
+variable "external_id_authority" {
+  type        = string
+  description = "Entra External ID authority URL (ciamlogin.com endpoint)."
+  default     = ""
+}
+
+variable "external_id_client_id" {
+  type        = string
+  description = "Backend API app registration client ID in Entra External ID."
+  default     = ""
+}
