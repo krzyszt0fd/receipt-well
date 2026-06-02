@@ -1,6 +1,8 @@
 @receipt_well_HostAddress = https://localhost:7028
+@token =
 
 GET {{receipt_well_HostAddress}}/weatherforecast/
 Accept: application/json
+Authorization: Bearer {{token}}
 
 ###
