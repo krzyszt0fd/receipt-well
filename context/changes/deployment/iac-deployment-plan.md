@@ -273,8 +273,8 @@ export const environment = {
   production: false,
   apiUrl: 'https://localhost:7000',
   externalId: {
-    authority: '',        // https://login.microsoftonline.com/<tenant-id>/v2.0
-    knownAuthority: '',   // login.microsoftonline.com
+    authority: '',        // https://<tenant-id>.ciamlogin.com/<tenant-id>/v2.0
+    knownAuthority: '',   // <tenant-id>.ciamlogin.com
     clientId: '',
     apiScope: ''
   }
@@ -288,8 +288,8 @@ export const environment = {
   production: true,
   apiUrl: 'https://receipt-well-api.azurewebsites.net',
   externalId: {
-    authority: '',        // https://login.microsoftonline.com/<tenant-id>/v2.0
-    knownAuthority: '',   // login.microsoftonline.com
+    authority: '',        // https://<tenant-id>.ciamlogin.com/<tenant-id>/v2.0
+    knownAuthority: '',   // <tenant-id>.ciamlogin.com
     clientId: '',
     apiScope: ''
   }
@@ -548,7 +548,7 @@ fetch('https://receipt-well-api.azurewebsites.net/weatherforecast')
 
 ## Phase 6 — Entra External ID Tenant + Auth Wiring
 
-> **SUPERSEDED**: This phase assumed a dedicated CIAM (External ID for Customers) tenant using `ciamlogin.com`. The project instead uses a standard Entra ID tenant with `login.microsoftonline.com`. Steps 6.1–6.3 (CIAM tenant creation and user flows) were not executed. App registrations (6.2) were created directly in the standard tenant. Authority values use `login.microsoftonline.com/{tenant-id}/v2.0` throughout.
+> **Note**: This phase uses Entra External ID (CIAM). The tenant is accessed via the GUID-based `ciamlogin.com` authority (`{tenant-id}.ciamlogin.com`), not the friendly-name form (`receiptwellb2c.ciamlogin.com`). Steps 6.1–6.3 were completed with an existing External ID tenant; app registrations were created directly in that tenant. Consumer users (created via the CIAM user flow) authenticate only through the `ciamlogin.com` endpoint — the standard `login.microsoftonline.com` endpoint works only for internal organizational accounts (admins, developers).
 
 > Complete this phase only after Phase 5 smoke tests pass.
 
@@ -641,7 +641,7 @@ variable "external_id_client_id" {
 **`infra/terraform.tfvars`** — add (after values are known from 6.2):
 
 ```hcl
-external_id_authority = "https://login.microsoftonline.com/<tenant-id>/v2.0"
+external_id_authority = "https://<tenant-id>.ciamlogin.com/<tenant-id>/v2.0"
 external_id_client_id = "<backend-app-registration-client-id>"
 ```
 
@@ -674,8 +674,8 @@ Update `environment.prod.ts` with Entra External ID values:
 
 ```typescript
 externalId: {
-  authority: 'https://login.microsoftonline.com/<tenant-id>/v2.0',
-  knownAuthority: 'login.microsoftonline.com',
+  authority: 'https://<tenant-id>.ciamlogin.com/<tenant-id>/v2.0',
+  knownAuthority: '<tenant-id>.ciamlogin.com',
   clientId: '<frontend-spa-client-id>',
   apiScope: 'api://<backend-client-id>/access_as_user'
 }
@@ -694,7 +694,7 @@ const msalConfig: Configuration = {
 };
 ```
 
-> `knownAuthorities` is not required for `login.microsoftonline.com` (it is in MSAL's default trusted host list). The field is kept for consistency but can be omitted.
+> `knownAuthorities` is required for `ciamlogin.com` — it is not in MSAL's default trusted host list. Omitting it causes a `ClientConfigurationError` at MSAL init.
 
 - [ ] `@azure/msal-angular` and `@azure/msal-browser` installed
 - [ ] Environment files populated with real Entra External ID values
@@ -717,7 +717,7 @@ const msalConfig: Configuration = {
 | `az webapp log tail` drops connection | Known D1 Shared limitation noted in `infrastructure.md` | Use Azure portal → App Service → Log stream as fallback |
 | External ID login loop / redirect_uri mismatch | Redirect URI not registered in SPA app registration | Add exact redirect URI in Entra External ID admin center → SPA registration → Authentication |
 | `AADSTS500011` — resource principal not found | API scope URI mismatch between frontend and backend registrations | Verify `apiScope` in `environment.prod.ts` matches exactly the URI exposed in the backend app registration (Entra External ID admin center → ReceiptWell API → Expose an API) |
-| `ClientConfigurationError: knownAuthority` at MSAL init | `knownAuthorities` omitted and a non-default authority is in use | Not applicable for `login.microsoftonline.com` (trusted by default); only relevant if switching to a custom domain |
+| `ClientConfigurationError: knownAuthority` at MSAL init | `knownAuthorities` omitted for a non-default authority | Required for `ciamlogin.com` (not in MSAL's default trusted list) — set `knownAuthorities: ['<tenant-id>.ciamlogin.com']` in the MSAL config |
 | Need to import existing resources (Phase 1 CLI commands already ran) | Resources exist in Azure but not in Terraform state | Run `terraform import` commands listed in the infra README; then `terraform plan` to verify zero diff before applying |
 
 ---

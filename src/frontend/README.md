@@ -23,8 +23,8 @@ export const environment = {
   production: false,
   apiUrl: 'https://localhost:7028',
   externalId: {
-    authority: 'https://login.microsoftonline.com/<tenant-id>/v2.0',
-    knownAuthority: 'login.microsoftonline.com',
+    authority: 'https://<tenant-id>.ciamlogin.com/<tenant-id>/v2.0',
+    knownAuthority: '<tenant-id>.ciamlogin.com',
     clientId: '<frontend-spa-client-id>',
     apiScope: 'api://<backend-client-id>/access_as_user'
   }

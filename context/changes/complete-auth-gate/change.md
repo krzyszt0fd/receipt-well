@@ -1,7 +1,7 @@
 ---
 change_id: complete-auth-gate
 title: Complete auth gate
-status: implementing
+status: implemented
 created: 2026-06-02
 updated: 2026-06-02
 archived_at: null

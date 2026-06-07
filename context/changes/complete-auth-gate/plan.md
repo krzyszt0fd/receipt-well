@@ -290,13 +290,13 @@ export const routes: Routes = [
 
 #### Automated
 
-- [x] 3.1 Angular build succeeds: `ng build` (from `src/frontend/`)
-- [x] 3.2 Unit tests pass: `ng test`
+- [x] 3.1 Angular build succeeds: `ng build` (from `src/frontend/`) — 3811d44
+- [x] 3.2 Unit tests pass: `ng test` — 3811d44
 
 #### Manual
 
-- [ ] 3.3 `http://localhost:4200/` shows landing page with Sign In button (unauthenticated)
-- [ ] 3.4 Clicking Sign In redirects to Entra External ID login page
-- [ ] 3.5 After login, browser navigates to `/home` with no console errors
-- [ ] 3.6 Visiting `/home` without auth redirects to Entra login
-- [ ] 3.7 Page refresh while authenticated stays on `/home`
+- [x] 3.3 `http://localhost:4200/` shows landing page with Sign In button (unauthenticated) — 3811d44
+- [x] 3.4 Clicking Sign In redirects to Entra External ID login page — 3811d44
+- [x] 3.5 After login, browser navigates to `/home` with no console errors — 3811d44
+- [x] 3.6 Visiting `/home` without auth redirects to Entra login — 3811d44
+- [x] 3.7 Page refresh while authenticated stays on `/home` — 3811d44
