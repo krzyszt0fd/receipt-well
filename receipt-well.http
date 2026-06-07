@@ -6,3 +6,7 @@ Accept: application/json
 Authorization: Bearer {{token}}
 
 ###
+
+GET {{receipt_well_HostAddress}}/health
+
+###

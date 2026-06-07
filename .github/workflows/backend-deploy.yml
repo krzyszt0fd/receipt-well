@@ -44,4 +44,4 @@ jobs:
       - name: Smoke test
         run: |
           sleep 30
-          curl --fail https://receipt-well-api.azurewebsites.net/weatherforecast
+          curl --fail https://receipt-well-api.azurewebsites.net/health
