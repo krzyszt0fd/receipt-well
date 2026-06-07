@@ -278,13 +278,13 @@ export const routes: Routes = [
 
 #### Automated
 
-- [x] 2.1 Angular build succeeds: `ng build` (from `src/frontend/`)
-- [x] 2.2 Unit test passes: `ng test` — `should create the app` passes
+- [x] 2.1 Angular build succeeds: `ng build` (from `src/frontend/`) — 816764e
+- [x] 2.2 Unit test passes: `ng test` — `should create the app` passes — 816764e
 
 #### Manual
 
-- [x] 2.3 Authenticated API requests carry `Authorization: Bearer` header in DevTools Network tab
-- [x] 2.4 Navigating to `/auth` does not throw a console error
+- [x] 2.3 Authenticated API requests carry `Authorization: Bearer` header in DevTools Network tab — 816764e
+- [x] 2.4 Navigating to `/auth` does not throw a console error — 816764e
 
 ### Phase 3: Frontend — Landing Page, Protected Shell, Route Structure
 

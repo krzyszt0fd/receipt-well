@@ -7,12 +7,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 
-var storageAccountName = builder.Configuration["AzureStorage:AccountName"];
-var keyRingContainer = builder.Configuration["AzureStorage:KeyRingContainerName"];
-builder.Services.AddDataProtection()
-    .PersistKeysToAzureBlobStorage(
+var dataProtection = builder.Services.AddDataProtection();
+if (!builder.Environment.IsDevelopment())
+{
+    var storageAccountName = builder.Configuration["AzureStorage:AccountName"];
+    var keyRingContainer = builder.Configuration["AzureStorage:KeyRingContainerName"];
+    dataProtection.PersistKeysToAzureBlobStorage(
         new Uri($"https://{storageAccountName}.blob.core.windows.net/{keyRingContainer}/keys.xml"),
         new DefaultAzureCredential());
+}
 
 builder.Services.AddCors(options =>
 {
