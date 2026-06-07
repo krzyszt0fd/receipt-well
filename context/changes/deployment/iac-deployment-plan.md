@@ -273,8 +273,8 @@ export const environment = {
   production: false,
   apiUrl: 'https://localhost:7000',
   externalId: {
-    authority: '',        // https://<tenant>.ciamlogin.com/<tenant>.onmicrosoft.com/v2.0
-    knownAuthority: '',   // <tenant>.ciamlogin.com
+    authority: '',        // https://login.microsoftonline.com/<tenant-id>/v2.0
+    knownAuthority: '',   // login.microsoftonline.com
     clientId: '',
     apiScope: ''
   }
@@ -288,8 +288,8 @@ export const environment = {
   production: true,
   apiUrl: 'https://receipt-well-api.azurewebsites.net',
   externalId: {
-    authority: '',        // https://<tenant>.ciamlogin.com/<tenant>.onmicrosoft.com/v2.0
-    knownAuthority: '',   // <tenant>.ciamlogin.com
+    authority: '',        // https://login.microsoftonline.com/<tenant-id>/v2.0
+    knownAuthority: '',   // login.microsoftonline.com
     clientId: '',
     apiScope: ''
   }
@@ -548,6 +548,8 @@ fetch('https://receipt-well-api.azurewebsites.net/weatherforecast')
 
 ## Phase 6 — Entra External ID Tenant + Auth Wiring
 
+> **SUPERSEDED**: This phase assumed a dedicated CIAM (External ID for Customers) tenant using `ciamlogin.com`. The project instead uses a standard Entra ID tenant with `login.microsoftonline.com`. Steps 6.1–6.3 (CIAM tenant creation and user flows) were not executed. App registrations (6.2) were created directly in the standard tenant. Authority values use `login.microsoftonline.com/{tenant-id}/v2.0` throughout.
+
 > Complete this phase only after Phase 5 smoke tests pass.
 
 ### 6.1 Create Entra External ID Tenant (Portal — manual)
@@ -555,7 +557,7 @@ fetch('https://receipt-well-api.azurewebsites.net/weatherforecast')
 > **MANUAL (portal)** — No CLI or Terraform path exists. See Phase 0 prerequisites for time estimate.
 
 1. Go to [entra.microsoft.com](https://entra.microsoft.com) → External Identities → External tenants → **Create a new external tenant**
-2. Tenant type: **External** (customer-facing CIAM)
+2. Tenant type: **External** (customer-facing CIAM) — **NOT USED: project uses standard Entra ID tenant instead, see Phase 6 note**
 3. **Region: Europe** (cannot be changed after creation)
 4. Tenant subdomain: `receiptwellext` → domain: `receiptwellext.onmicrosoft.com`
 5. Link the tenant to your commercial subscription
@@ -619,7 +621,7 @@ In the Entra External ID admin center (still inside the external tenant):
 
 ```hcl
 variable "external_id_authority" {
-  description = "Entra External ID authority URL (ciamlogin.com endpoint)"
+  description = "Entra ID authority URL (login.microsoftonline.com/{tenant-id}/v2.0)"
   default     = ""
 }
 
@@ -639,7 +641,7 @@ variable "external_id_client_id" {
 **`infra/terraform.tfvars`** — add (after values are known from 6.2):
 
 ```hcl
-external_id_authority = "https://receiptwellext.ciamlogin.com/receiptwellext.onmicrosoft.com/v2.0"
+external_id_authority = "https://login.microsoftonline.com/<tenant-id>/v2.0"
 external_id_client_id = "<backend-app-registration-client-id>"
 ```
 
@@ -672,10 +674,10 @@ Update `environment.prod.ts` with Entra External ID values:
 
 ```typescript
 externalId: {
-  authority: 'https://receiptwellext.ciamlogin.com/receiptwellext.onmicrosoft.com/v2.0',
-  knownAuthority: 'receiptwellext.ciamlogin.com',
+  authority: 'https://login.microsoftonline.com/<tenant-id>/v2.0',
+  knownAuthority: 'login.microsoftonline.com',
   clientId: '<frontend-spa-client-id>',
-  apiScope: 'https://receiptwellext.onmicrosoft.com/receiptwell-api/access_as_user'
+  apiScope: 'api://<backend-client-id>/access_as_user'
 }
 ```
 
@@ -692,7 +694,7 @@ const msalConfig: Configuration = {
 };
 ```
 
-> `knownAuthorities` is required because `ciamlogin.com` is not in MSAL's default trusted host list. Omitting it causes a `ClientConfigurationError` at runtime.
+> `knownAuthorities` is not required for `login.microsoftonline.com` (it is in MSAL's default trusted host list). The field is kept for consistency but can be omitted.
 
 - [ ] `@azure/msal-angular` and `@azure/msal-browser` installed
 - [ ] Environment files populated with real Entra External ID values
@@ -715,7 +717,7 @@ const msalConfig: Configuration = {
 | `az webapp log tail` drops connection | Known D1 Shared limitation noted in `infrastructure.md` | Use Azure portal → App Service → Log stream as fallback |
 | External ID login loop / redirect_uri mismatch | Redirect URI not registered in SPA app registration | Add exact redirect URI in Entra External ID admin center → SPA registration → Authentication |
 | `AADSTS500011` — resource principal not found | API scope URI mismatch between frontend and backend registrations | Verify `apiScope` in `environment.prod.ts` matches exactly the URI exposed in the backend app registration (Entra External ID admin center → ReceiptWell API → Expose an API) |
-| `ClientConfigurationError: knownAuthority` at MSAL init | `knownAuthorities` omitted from MSAL config — `ciamlogin.com` is not in MSAL's default trusted list | Add `knownAuthorities: [environment.externalId.knownAuthority]` to the MSAL `auth` config block |
+| `ClientConfigurationError: knownAuthority` at MSAL init | `knownAuthorities` omitted and a non-default authority is in use | Not applicable for `login.microsoftonline.com` (trusted by default); only relevant if switching to a custom domain |
 | Need to import existing resources (Phase 1 CLI commands already ran) | Resources exist in Azure but not in Terraform state | Run `terraform import` commands listed in the infra README; then `terraform plan` to verify zero diff before applying |
 
 ---

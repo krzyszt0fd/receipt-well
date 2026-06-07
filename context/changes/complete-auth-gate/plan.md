@@ -290,8 +290,8 @@ export const routes: Routes = [
 
 #### Automated
 
-- [ ] 3.1 Angular build succeeds: `ng build` (from `src/frontend/`)
-- [ ] 3.2 Unit tests pass: `ng test`
+- [x] 3.1 Angular build succeeds: `ng build` (from `src/frontend/`)
+- [x] 3.2 Unit tests pass: `ng test`
 
 #### Manual
 

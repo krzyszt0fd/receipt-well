@@ -65,7 +65,7 @@ variable "github_deploy_branch" {
 
 variable "external_id_authority" {
   type        = string
-  description = "Entra External ID authority URL (ciamlogin.com endpoint)."
+  description = "Entra ID authority URL (login.microsoftonline.com/{tenant-id}/v2.0)."
   default     = ""
 }
 

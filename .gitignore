@@ -9,5 +9,8 @@ infra/terraform.tfstate.backup
 infra/terraform.tfvars
 infra/crash.log
 
+# Frontend local environment (contains real Entra/API credentials — never commit)
+src/frontend/src/environments/environment.local.ts
+
 # Claude local settings
 .claude/settings.local.json

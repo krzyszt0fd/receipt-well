@@ -1,59 +1,60 @@
 # Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.12.
+Angular SPA for ReceiptWell. Requires the backend running locally for full functionality.
 
-## Development server
+## Prerequisites
 
-To start a local development server, run:
+- Node.js (see `.nvmrc` or `package.json` for version)
+- Angular CLI: `npm install -g @angular/cli`
+- Backend running on `https://localhost:7028` (see `src/backend/`)
 
-```bash
-ng serve
+## Local environment setup (first time)
+
+Authentication credentials are never committed. Create a local environment file before running the app:
+
+```
+src/frontend/src/environments/environment.local.ts
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Copy this template and fill in the values from your Entra app registration:
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
+```typescript
+export const environment = {
+  production: false,
+  apiUrl: 'https://localhost:7028',
+  externalId: {
+    authority: 'https://login.microsoftonline.com/<tenant-id>/v2.0',
+    knownAuthority: 'login.microsoftonline.com',
+    clientId: '<frontend-spa-client-id>',
+    apiScope: 'api://<backend-client-id>/access_as_user'
+  }
+};
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+This file is gitignored and must be created manually on each machine.
+
+## Running locally
 
 ```bash
-ng generate --help
+ng serve --configuration=local
 ```
 
-## Building
+Open `http://localhost:4200/`. The app reloads on file changes.
 
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+> `ng serve` (without `--configuration=local`) starts without Entra credentials — the landing page renders but Sign In will fail.
 
 ## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
 
 ```bash
 ng test
 ```
 
-## Running end-to-end tests
+## Building
 
-For end-to-end (e2e) testing, run:
+Production build (used by CI):
 
 ```bash
-ng e2e
+ng build
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Artifacts are written to `dist/`. The production configuration substitutes `__PLACEHOLDER__` values in `environment.prod.ts` via GitHub Actions variables before the build runs.
