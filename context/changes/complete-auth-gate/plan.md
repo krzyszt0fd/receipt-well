@@ -267,24 +267,24 @@ export const routes: Routes = [
 
 #### Automated
 
-- [x] 1.1 Backend builds without warnings: `dotnet build src/backend/ReceiptWell.csproj`
+- [x] 1.1 Backend builds without warnings: `dotnet build src/backend/ReceiptWell.csproj` — 489b7c1
 
 #### Manual
 
-- [x] 1.2 `GET /weatherforecast` without Authorization header returns 401
-- [x] 1.3 `GET /openapi/v1.json` in development (no header) returns HTTP 200
+- [x] 1.2 `GET /weatherforecast` without Authorization header returns 401 — 489b7c1
+- [x] 1.3 `GET /openapi/v1.json` in development (no header) returns HTTP 200 — 489b7c1
 
 ### Phase 2: Frontend — MSAL Interceptor, Guard Config, Redirect Route
 
 #### Automated
 
-- [ ] 2.1 Angular build succeeds: `ng build` (from `src/frontend/`)
-- [ ] 2.2 Unit test passes: `ng test` — `should create the app` passes
+- [x] 2.1 Angular build succeeds: `ng build` (from `src/frontend/`)
+- [x] 2.2 Unit test passes: `ng test` — `should create the app` passes
 
 #### Manual
 
-- [ ] 2.3 Authenticated API requests carry `Authorization: Bearer` header in DevTools Network tab
-- [ ] 2.4 Navigating to `/auth` does not throw a console error
+- [x] 2.3 Authenticated API requests carry `Authorization: Bearer` header in DevTools Network tab
+- [x] 2.4 Navigating to `/auth` does not throw a console error
 
 ### Phase 3: Frontend — Landing Page, Protected Shell, Route Structure
 
