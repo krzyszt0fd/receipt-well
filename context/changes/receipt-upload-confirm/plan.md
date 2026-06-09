@@ -18,7 +18,7 @@ migration.
 
 ## Desired End State
 
-Authenticated user navigates to `/home` → redirected to `/home/upload` → selects a PNG, JPEG, WEBP, or (non-animated) GIF photo (≤ 20 MB) → upload form transitions to a confirmation panel showing filename and formatted file size. The backend has stored the photo in the receipts container under `{userId}/{receiptId}.{ext}` and indexed a `ReceiptDocument` (status: `pending`) in Azure AI Search. No AI extraction runs in this slice.
+Authenticated user navigates to `/home` → redirected to `/home/upload` → selects a PNG, JPEG, WEBP, or (non-animated) GIF photo (≤ 20 MB) → upload form transitions to a confirmation panel showing filename and formatted file size. The backend has stored the photo in the receipts container under `{userId}/{receiptId}` (no extension — Content-Type and Content-Disposition are set as blob metadata) and indexed a `ReceiptDocument` (status: `pending`) in Azure AI Search. No AI extraction runs in this slice.
 
 ### Key Discoveries
 
@@ -66,7 +66,11 @@ else
 }
 ```
 
-**Server-side blob move = download + re-upload.** `SyncCopyFromUriAsync` requires a public or SAS-signed source URI even within the same storage account. For ≤ 10 MB receipts, downloading the staging blob content and re-uploading to the receipts container is simpler and sufficient. No need to generate an internal read SAS.
+**Confirm uses copy-then-delete-staging, not move.** The confirm flow copies the staging blob to the receipts container first, writes to Azure AI Search, and only then deletes the staging blob. This preserves the staging file for retry if the search write fails. `SyncCopyFromUriAsync` requires a public or SAS-signed source URI even within the same storage account — use `DownloadContentAsync()` + `UploadAsync(overwrite: true)` instead.
+
+**receiptId is derived from the staging blob name.** Extract the GUID segment via `stagingBlobName.Split('/').Last()`. This makes retries idempotent: the same `stagingBlobName` always maps to the same `receiptId` and the same target path in the receipts container.
+
+**Staging delete after search write is non-fatal.** After a successful search write, delete the staging blob in a separate `try/catch`. If the delete throws, log Warning and continue — do not rethrow. A staging delete failure must never fail a successfully confirmed receipt; the container lifecycle rule (1-day TTL) handles eventual cleanup.
 
 **Every 500 response must log at Error.** Any `catch` block that results in a 500 being returned to the client must call the source-generated logger at `Error` level before returning — not just the orphaned-blob case. This applies to both endpoints.
 
@@ -236,7 +240,7 @@ Import `HTTP_INTERCEPTORS` from `@angular/common/http`. Keep the existing bare `
 
 **Contract**:
 - `getStagingSlot()`: `HttpClient.post<{ stagingUri: string; stagingBlobName: string }>(environment.apiUrl + '/receipts/staging-slot', {})` — returns `Observable`.
-- `uploadToBlob(sasUri: string, file: File): Promise<void>`: `fetch(sasUri, { method: 'PUT', headers: { 'Content-Type': file.type, 'x-ms-blob-type': 'BlockBlob' }, body: file })`. Throw on non-2xx.
+- `uploadToBlob(sasUri: string, file: File): Promise<void>`: `fetch(sasUri, { method: 'PUT', headers: { 'Content-Type': file.type, 'x-ms-blob-type': 'BlockBlob', 'x-ms-blob-content-disposition': `attachment; filename*=UTF-8''${encodeURIComponent(file.name)}` }, body: file })`. Throw on non-2xx. `encodeURIComponent` handles non-ASCII characters (Polish diacritics, spaces, etc.) in the filename — apply it to `file.name` only, not the whole header value.
 
 #### 5. Upload component
 
@@ -244,7 +248,7 @@ Import `HTTP_INTERCEPTORS` from `@angular/common/http`. Keep the existing bare `
 
 **Intent**: Standalone lazy-loaded component. Reactive form with file input — validates size (≤ 20,000,000 bytes) and MIME type on file selection. On submit: calls `getStagingSlot()` → `uploadToBlob()`. Drives a signal-based state machine; Phase 3 completes it.
 
-**Allowed file types are dictated by the S-03 vision model** (GPT image input accepts only PNG, JPEG, WEBP, and non-animated GIF, ≤ 20 MB). Accepting anything else here would store a receipt that S-03 cannot extract. This is the binding allowlist for the whole upload pipeline — client validation, server validation, and extension mapping must all use it.
+**Allowed file types are dictated by the S-03 vision model** (GPT image input accepts only PNG, JPEG, WEBP, and non-animated GIF, ≤ 20 MB). Accepting anything else here would store a receipt that S-03 cannot extract. This is the binding allowlist for the whole upload pipeline — client validation and server validation must both enforce it.
 
 **Contract**:
 - `ChangeDetectionStrategy.OnPush`, no `standalone: true` (default in Angular v20+).
@@ -311,11 +315,13 @@ Implement `POST /receipts/confirm` (validates ownership + blob properties in sta
 
 **Contract**:
 - **Ownership check**: `stagingBlobName.StartsWith($"{userId}/", StringComparison.Ordinal)`. If false: log Warning + return a result indicating 403 (prevents a user confirming another user's staging blob).
-- **Blob properties**: `GetPropertiesAsync()` on the staging blob. Validate `ContentType` ∈ `{ "image/png", "image/jpeg", "image/webp", "image/gif" }` and `ContentLength ≤ 20_000_000`. On invalid: log Information (validation failure) + return 400 result.
-- **Extension**: map ContentType → `.png` / `.jpg` / `.webp` / `.gif`. Fallback: `Path.GetExtension(originalFileName)`.
-- **Move**: `DownloadContentAsync()` on the staging blob; `UploadAsync()` to `{userId}/{receiptId}{ext}` in the receipts container with `BlobHttpHeaders { ContentType = contentType }`. Delete staging blob after successful upload.
-- **Index write**: `SearchClient.MergeOrUploadDocumentsAsync(new[] { receiptDocument })`. SDK retries up to 3 times (configured at DI registration in Phase 1). On `RequestFailedException` after retries: log Error (including `receiptId` + target blob URL) + rethrow.
+- **Blob properties**: `GetPropertiesAsync()` on the staging blob. Validate all three: `ContentType` ∈ `{ "image/png", "image/jpeg", "image/webp", "image/gif" }`, `ContentLength ≤ 20_000_000`, and `ContentDisposition` is non-null/non-empty. On any invalid: log Information (validation failure) + return 400 result.
+- **receiptId**: `stagingBlobName.Split('/').Last()` — the GUID segment of the staging path. This is deterministic: retrying with the same `stagingBlobName` always produces the same target path in the receipts container.
+- **Copy** (staging blob is not deleted yet): `DownloadContentAsync()` on the staging blob; `UploadAsync(overwrite: true)` to `{userId}/{receiptId}` (no extension) in the receipts container with `BlobHttpHeaders { ContentType = stagingProperties.ContentType, ContentDisposition = stagingProperties.ContentDisposition }` — values are read from the staging blob properties already fetched during validation. The staging blob intentionally remains — it is the retry anchor.
+- **Index write**: `SearchClient.MergeOrUploadDocumentsAsync(new[] { receiptDocument })`. SDK retries up to 3 times (configured at DI registration in Phase 1). On `RequestFailedException` after retries: log Error (including `receiptId` + target blob URL) + rethrow. Staging blob remains so the caller can retry.
+- **Staging cleanup**: only after a successful index write — delete the staging blob in a separate `try/catch`. On exception: log Warning, continue. Do not rethrow.
 - **Return**: `record ReceiptConfirmResult(string ReceiptId, string FileName, long FileSize)` on success.
+- **Known limitation**: if the copy to the receipts container succeeds but the search write fails persistently and the caller never retries, an orphaned blob will remain in the receipts container with no search document. Accepted as an MVP edge case — no automated cleanup for this scenario exists.
 - Source-generated log at Information on success: `"Receipt confirmed: user {UserId} receiptId {ReceiptId}"`.
 
 #### 2. Confirm endpoint
@@ -373,9 +379,10 @@ Implement `POST /receipts/confirm` (validates ownership + blob properties in sta
 #### Manual Verification
 
 - Full flow: select a valid JPEG → spinner → confirmation panel shows filename and formatted file size
-- Azure Storage: blob at `{userId}/{receiptId}.jpg` in receipts container; no blob remains in staging container
+- Azure Storage: blob at `{userId}/{receiptId}` (no extension) in receipts container; open it in Storage Explorer — it opens with the correct content type and the original filename appears in the download dialog; no blob remains in staging container
 - Azure AI Search portal → index → Documents: receipt document present with `status: "pending"`, correct `userId`, `fileName`, `fileSize`, `uploadedAt`
-- Simulated failure (temporarily invalid Search API key): error state shown in Angular UI; Error log appears in backend console
+- Simulated search failure (temporarily invalid Search API key): error state shown in Angular UI; Error log appears in backend console; **staging blob still exists** (not deleted) — confirming the retry anchor is in place
+- Retry path: restore the API key, re-submit confirm with the same `stagingBlobName` → succeeds; only one blob exists in the receipts container (no duplicate)
 - "Upload another" resets form to idle
 - Mobile (or DevTools device emulation): file input shows camera/gallery picker
 
@@ -396,12 +403,15 @@ Implement `POST /receipts/confirm` (validates ownership + blob properties in sta
 5. Select valid JPEG → confirm panel with filename and size
 6. Azure Storage Explorer → blob in receipts container, staging empty
 7. Azure portal → AI Search index → verify receipt document fields
-8. Temporarily break Search API key → upload → error state in UI + Error in backend log
-9. "Upload another" → form resets
+8. Temporarily break Search API key → upload → error state in UI + Error in backend log; verify staging blob still present in Azure Storage Explorer (not deleted)
+9. Restore API key → re-submit confirm with same `stagingBlobName` → succeeds; confirm exactly one blob in receipts container, staging cleaned up
+10. "Upload another" → form resets
 
 ## Performance Considerations
 
 File bytes travel client → Azure Blob (SAS PUT) → backend download → backend re-upload to receipts. The double-touch adds latency proportional to file size. For ≤ 10 MB with a single MVP user this is acceptable. A future optimization is a server-side copy using a short-lived internal read SAS on the staging blob.
+
+**Known limitation**: if the receipts-container upload succeeds but the Azure AI Search write fails persistently and the user never retries, an orphaned blob will remain in the receipts container indefinitely (no TTL, no automated reconciliation). The staging blob is cleaned up by the 1-day lifecycle rule. Accepted as an MVP edge case; a future reconciliation job can compare the receipts container against the search index to surface and remove orphans.
 
 ## Migration Notes
 
@@ -465,6 +475,7 @@ The Azure AI Search index schema (all fields) is created idempotently at Phase 1
 - [ ] 3.5 Receipt blob at `{userId}/{receiptId}.jpg` in receipts container
 - [ ] 3.6 No blob remains in staging container after confirm
 - [ ] 3.7 Receipt document in Azure AI Search with `status: "pending"` and correct fields
-- [ ] 3.8 Simulated failure → error state in Angular UI + Error in backend console
-- [ ] 3.9 "Upload another" resets form to idle
-- [ ] 3.10 Mobile emulation: file input shows camera/gallery picker
+- [ ] 3.8 Simulated search failure → error state in Angular UI + Error in backend console + staging blob still present
+- [ ] 3.9 Retry with same `stagingBlobName` after restoring API key → succeeds; one blob in receipts, no duplicate
+- [ ] 3.10 "Upload another" resets form to idle
+- [ ] 3.11 Mobile emulation: file input shows camera/gallery picker

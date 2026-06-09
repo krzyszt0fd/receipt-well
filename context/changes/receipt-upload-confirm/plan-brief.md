@@ -36,7 +36,10 @@ size, plus an "Upload another" button. The backend has the photo stored as
 | Confirmation UX | Inline state transition | Signal-driven; no external UI library needed | Plan |
 | SAS generation | Branch on `CanGenerateSasUri` (account key local / user delegation key prod) | The two code paths are completely different; branching prevents silent prod failure | Plan |
 | Index schema | All S-01–S-04 fields declared now | Freezes the contract; S-03 fills nullable fields without a schema migration | Plan |
-| Search write failure | SDK retry (MaxRetries=3) → log Error → return 500 | Tolerates transient Search errors; orphaned blob is rare and cheap at MVP scale | Plan |
+| Confirm flow | Copy to receipts → write search → delete staging | Staging blob remains as retry anchor; if search fails caller can retry with same `stagingBlobName` | Plan (revised) |
+| receiptId | Derived from `stagingBlobName` last segment (the pre-created GUID) | Deterministic → retries are idempotent; no duplicate blobs in receipts container | Plan (revised) |
+| Search write failure | SDK retry (MaxRetries=3) → log Error → staging blob preserved → return 500 | Caller can retry; orphaned receipts-container blob is accepted MVP risk if caller never retries | Plan (revised) |
+| Staging delete failure | Log Warning, continue — non-fatal | Receipt is already confirmed; staging lifecycle rule (1 day) handles cleanup | Plan (revised) |
 | Staging cleanup | Azure Blob lifecycle rule (1 day) via Terraform | Zero application code; handles abandoned uploads transparently | Plan |
 
 ## Scope
@@ -65,9 +68,9 @@ Browser                   ASP.NET Core            Azure
                           ◄─────────────────────── { stagingUri, stagingBlobName }
 3. PUT file ─────────────────────────────────────► staging/{userId}/{guid}  (SAS, bypasses MSAL interceptor)
 4. POST /receipts/confirm ───────────────────────► validate blob props
-                                                   download → re-upload to receipts/{userId}/{receiptId}.ext
-                                                   delete staging blob
+                                                   copy to receipts/{userId}/{receiptId}  ← no extension; Content-Type + Content-Disposition set as blob headers
                                                    index ReceiptDocument (status: pending)
+                                                   delete staging blob (non-fatal if fails)
                           ◄─────────────────────── { receiptId, fileName, fileSize }
 5. show confirmation panel
 ```
@@ -81,7 +84,7 @@ MSAL interceptor handles Bearer token for steps 2 and 4 automatically. Step 3 us
 |---|---|---|
 | 1. Backend setup | Packages, DI, `ReceiptDocument` model, Azure AI Search index created at startup | Index initialization failure blocks startup — logged Critical |
 | 2. Staging slot + blob upload | File picker, client validation, SAS fetch, direct blob PUT | SAS generation differs by credential type — `CanGenerateSasUri` branch is critical |
-| 3. Confirm + index + UX | Confirm endpoint, AI Search write with retry, inline confirmation panel | If move succeeds but index write fails after retries — orphaned blob logged at Error |
+| 3. Confirm + index + UX | Confirm endpoint, AI Search write with retry, inline confirmation panel | Staging preserved on search failure → retry is possible; orphaned receipts blob if user never retries (accepted MVP risk) |
 
 **Prerequisites:** F-01 complete (done); Azure Blob Storage account + staging/receipts containers exist; Azure AI Search instance exists; local developer has account key in user secrets and Search API key in user secrets.
 
@@ -90,7 +93,8 @@ MSAL interceptor handles Bearer token for steps 2 and 4 automatically. Step 3 us
 ## Open Risks & Assumptions
 
 - Azure AI Search Free tier (1 index, 50 MB) is assumed sufficient for MVP. If the account is on Basic tier, ~$75/month applies.
-- The server-side "move" is download + re-upload (not a native Azure server-side copy). For ≤ 10 MB this is fine; revisit if file size limits increase.
+- The server-side copy is download + re-upload (not a native Azure server-side copy). For ≤ 10 MB this is fine; revisit if file size limits increase.
+- **Known limitation**: if the receipts-container copy succeeds but the search write fails persistently and the user never retries, an orphaned blob will remain in the receipts container indefinitely (no TTL). Accepted as an MVP edge case.
 - The allowed file types (PNG, JPEG, WEBP, non-animated GIF) and the 20 MB cap are dictated by the S-03 vision model's image-input limits, not by storage. Accepting other types would store receipts that S-03 cannot extract. Animated-GIF rejection is deferred to S-03.
 
 ## Success Criteria (Summary)
