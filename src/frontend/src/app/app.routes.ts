@@ -10,7 +10,14 @@ export const routes: Routes = [
     path: 'home',
     component: ShellComponent,
     canActivate: [MsalGuard],
-    children: []
+    children: [
+      { path: '', redirectTo: 'upload', pathMatch: 'full' },
+      {
+        path: 'upload',
+        loadComponent: () =>
+          import('./receipts/upload/upload.component').then(m => m.UploadComponent)
+      }
+    ]
   },
   { path: '**', redirectTo: '' }
 ];

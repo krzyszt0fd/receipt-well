@@ -74,6 +74,10 @@ else
 
 **Every 500 response must log at Error.** Any `catch` block that results in a 500 being returned to the client must call the source-generated logger at `Error` level before returning — not just the orphaned-blob case. This applies to both endpoints.
 
+**MSAL Angular v5 strict pathname matching — use `/*` in protectedResourceMap.** MSAL Angular v5 changed URL matching to strict anchored regex (`^pattern$` per URL component). A key of `https://host:port` has `pathname = "/"` which compiles to regex `^/$` — matching only the root path, not `/api/v1/endpoint`. Fix: use `${environment.apiUrl}/*` as the map key; the `/*` pattern compiles to `^\/.*$`, matching all sub-paths. This already landed in Phase 2.
+
+**MSAL interceptor requires an active account.** `MsalInterceptor` calls `instance.getActiveAccount()` to determine which account to silently acquire a token for. If no active account is set, the interceptor skips token attachment. Fix: in `App.ngOnInit()`, subscribe to `broadcastService.inProgress$` filtered to `InteractionStatus.None` and call `instance.setActiveAccount(accounts[0])` if no active account is set. This already landed in Phase 2.
+
 **Angular upload must bypass the MSAL interceptor.** The SAS URI is a direct Azure Storage URL, not `environment.apiUrl`. Sending a Bearer token to it causes a 400 from Azure Storage. Use `fetch` (not `HttpClient`) for the PUT to the SAS URI.
 
 ---
@@ -185,6 +189,21 @@ Implement `POST /receipts/staging-slot` (creates an empty named blob in the stag
 
 ### Changes Required
 
+#### −1. Install Angular Material with indigo-pink theme
+
+**Files**: `src/frontend/package.json`, `src/frontend/src/styles.scss`, `src/frontend/src/app/app.config.ts`
+
+**Intent**: Provide a polished Material Design UI for the upload component. The indigo-pink prebuilt M2 theme is the simplest way to apply the familiar indigo-primary / pink-accent palette without a custom SCSS build.
+
+**Contract**:
+- Install `@angular/animations`, `@angular/material`, and `@angular/cdk` (compatible with Angular 21) from `src/frontend/`.
+- `styles.scss`: import the prebuilt theme and the Material icons font:
+  ```scss
+  @import '@angular/material/prebuilt-themes/indigo-pink.css';
+  ```
+- `app.config.ts`: add `provideAnimationsAsync()` from `@angular/platform-browser/animations/async` to the providers array. (No-op animations would suppress ripple and spinner transitions.)
+- The `UploadComponent` (step 5) uses `MatCardModule`, `MatButtonModule`, `MatIconModule`, and `MatProgressSpinnerModule` — Material icons loaded via Google Fonts CDN link in `index.html`.
+
 #### 0. Register MsalInterceptor in the HTTP pipeline
 
 **File**: `src/frontend/src/app/app.config.ts`
@@ -252,6 +271,7 @@ Import `HTTP_INTERCEPTORS` from `@angular/common/http`. Keep the existing bare `
 
 **Contract**:
 - `ChangeDetectionStrategy.OnPush`, no `standalone: true` (default in Angular v20+).
+- Imports: `MatCardModule`, `MatButtonModule`, `MatIconModule`, `MatProgressSpinnerModule`, `ReactiveFormsModule`. Uses a `mat-card` container, `mat-raised-button color="primary"` for the submit action, and `mat-spinner` (diameter 24) in place of the button during `uploading`. A custom file drop zone with visually-hidden `<input>` is styled to match the indigo-pink theme.
 - File input: `accept=".png,.jpg,.jpeg,.webp,.gif"`, `capture="environment"`.
 - State signal: `type UploadState = 'idle' | 'uploading' | 'confirmed' | 'error'` — Phase 2 only reaches `uploading`.
 - Client-side validation on file selection: allowed MIME types `image/png`, `image/jpeg`, `image/webp`, `image/gif`; size ≤ 20,000,000 bytes. Show inline error via `role="alert"` span.
@@ -449,17 +469,18 @@ The Azure AI Search index schema (all fields) is created idempotently at Phase 1
 
 #### Automated
 
-- [ ] 2.1 Backend builds: `dotnet build src/backend/ReceiptWell.csproj`
-- [ ] 2.2 Frontend builds: `ng build` (from `src/frontend/`)
-- [ ] 2.3 Unit tests pass: `ng test`
+- [x] 2.0 Angular Material + CDK + Animations installed; indigo-pink theme applied; `ng build` succeeds
+- [x] 2.1 Backend builds: `dotnet build src/backend/ReceiptWell.csproj`
+- [x] 2.2 Frontend builds: `ng build` (from `src/frontend/`)
+- [x] 2.3 Unit tests pass: `ng test`
 
 #### Manual
 
-- [ ] 2.4 `/home` redirects to `/home/upload` and shows upload form
-- [ ] 2.5 File > 10 MB shows inline validation error without a network call
-- [ ] 2.6 Invalid file type shows inline validation error without a network call
-- [ ] 2.7 Valid JPEG submit → staging blob appears in Azure Storage
-- [ ] 2.8 Authenticated request to `environment.apiUrl` carries an `Authorization: Bearer` header
+- [x] 2.4 `/home` redirects to `/home/upload` and shows upload form
+- [x] 2.5 File > 10 MB shows inline validation error without a network call
+- [x] 2.6 Invalid file type shows inline validation error without a network call
+- [x] 2.7 Valid JPEG submit → staging blob appears in Azure Storage
+- [x] 2.8 Authenticated request to `environment.apiUrl` carries an `Authorization: Bearer` header
 
 ### Phase 3: Confirm + Azure AI Search + Confirmation UX
 

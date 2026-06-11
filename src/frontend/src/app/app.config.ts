@@ -1,6 +1,7 @@
 import { APP_INITIALIZER, ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import {
   MSAL_INSTANCE,
   MSAL_GUARD_CONFIG,
@@ -20,8 +21,10 @@ import { environment } from '../environments/environment';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
+    provideAnimationsAsync(),
     provideRouter(routes),
     provideHttpClient(withInterceptorsFromDi()),
+    { provide: HTTP_INTERCEPTORS, useClass: MsalInterceptor, multi: true },
     {
       provide: MSAL_INSTANCE,
       useValue: new PublicClientApplication({
@@ -48,7 +51,7 @@ export const appConfig: ApplicationConfig = {
       provide: MSAL_INTERCEPTOR_CONFIG,
       useValue: {
         interactionType: InteractionType.Redirect,
-        protectedResourceMap: new Map([[environment.apiUrl, [environment.externalId.apiScope]]])
+        protectedResourceMap: new Map([[`${environment.apiUrl}/*`, [environment.externalId.apiScope]]])
       } as MsalInterceptorConfiguration
     },
     MsalService,

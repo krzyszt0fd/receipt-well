@@ -10,3 +10,9 @@ Authorization: Bearer {{token}}
 GET {{receipt_well_HostAddress}}/health
 
 ###
+
+POST {{receipt_well_HostAddress}}/receipts/staging-slot
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+###

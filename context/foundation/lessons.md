@@ -1,10 +1,31 @@
 # Lessons Learned
 
+## JwtBearer: set MapInboundClaims = false or JWT claim names won't resolve
+
+- **Context**: `Program.cs` — `AddJwtBearer` configuration; applies to every endpoint that reads claims by name
+- **Problem**: ASP.NET Core JwtBearer defaults to `MapInboundClaims = true`, which rewrites JWT claim names to legacy .NET URI types (e.g. `oid` → `http://schemas.microsoft.com/identity/claims/objectidentifier`). `FindFirstValue("oid")` returns null even when the claim is present in the token.
+- **Rule**: Always set `options.MapInboundClaims = false` in `AddJwtBearer`. Use short JWT claim names (`oid`, `sub`, `name`, etc.) everywhere in endpoint code.
+- **Applies to**: backend auth setup, any endpoint using `FindFirstValue` or `FindFirst`
+
+## MSAL Angular v5: strict pathname matching requires `/*` wildcard in protectedResourceMap
+
+- **Context**: `app.config.ts` — any phase that configures `MSAL_INTERCEPTOR_CONFIG.protectedResourceMap`
+- **Problem**: MSAL Angular v5 changed URL matching to strict anchored regex (`^pattern$` per URL component). A key of `https://host:port` has `pathname = "/"` which produces regex `^/$` — only matching the root, not `/api/endpoint`. All API calls return 401 because the interceptor skips them.
+- **Rule**: Always use a wildcard suffix in the map key: `${environment.apiUrl}/*` (not just `${environment.apiUrl}`). In strict mode, `/*` compiles to `^\/.*$`, matching all sub-paths.
+- **Applies to**: app config, environment-specific protectedResourceMap setup
+
+## MSAL interceptor requires active account to be set
+
+- **Context**: `App.ngOnInit()` — must subscribe to `broadcastService.inProgress$` and call `instance.setActiveAccount(accounts[0])` on `InteractionStatus.None`
+- **Problem**: `MsalInterceptor` calls `instance.getActiveAccount()` first; without it set, no silent token acquisition runs and Bearer header is omitted.
+- **Rule**: In `App.ngOnInit()`, subscribe to `inProgress$` filtered to `None`, and if no active account is set but accounts exist in cache, call `setActiveAccount(accounts[0])`.
+- **Applies to**: app bootstrap, auth configuration
+
 > Append-only register of recurring rules and patterns. Re-read at start by /10x-frame, /10x-research, /10x-plan, /10x-plan-review, /10x-implement, /10x-impl-review.
 
-## Use GUID-based ciamlogin.com authority for Entra External ID
+## Use GUID-based ciamlogin.com authority for Entra External ID — both frontend and backend
 
-- **Context**: MSAL Angular auth config — any phase that sets `authority` / `knownAuthority` in environment files or `app.config.ts`
-- **Problem**: CIAM consumer users can't sign in; internal admin accounts still work, hiding the misconfiguration
-- **Rule**: For Entra External ID (CIAM), always set `authority` to `https://{tenant-id}.ciamlogin.com/{tenant-id}/v2.0` and `knownAuthorities` to the matching host. The `login.microsoftonline.com` endpoint and the friendly-name CIAM form (e.g. `receiptwellb2c.ciamlogin.com`) work only for organizational accounts, not consumer users.
-- **Applies to**: environment setup, provisioning
+- **Context**: Any config that sets an authority/issuer for Entra External ID (CIAM) — frontend `environment.*.ts`, backend `AzureExternalId:Authority` user secret, and any IaC that wires auth.
+- **Problem**: CIAM tokens carry `iss = https://{tenant-id}.ciamlogin.com/{tenant-id}/v2.0`. If the backend `Authority` is set to a `login.microsoftonline.com` URL or a friendly-name CIAM URL, the JwtBearer middleware fetches the wrong discovery document, discovers a different issuer, and rejects every token with "issuer is invalid". Consumer users can't call the API; internal Entra accounts still work, hiding the misconfiguration.
+- **Rule**: For both frontend MSAL and backend JwtBearer, always use `https://{tenant-id}.ciamlogin.com/{tenant-id}/v2.0` as the authority/issuer. Backend value goes in `dotnet user-secrets set "AzureExternalId:Authority" "https://{tenant-id}.ciamlogin.com/{tenant-id}/v2.0"`. Frontend value goes in `environment.local.ts` (already set). After changing user secrets, restart the backend — JwtBearer caches the discovery doc at startup.
+- **Applies to**: environment setup, backend user secrets, provisioning

@@ -9,6 +9,21 @@ resource "azurerm_storage_account" "main" {
 
   # azurerm 4.x renamed this from allow_blob_public_access
   allow_nested_items_to_be_public = false
+
+  blob_properties {
+    # Required for browser SAS PUT uploads (preflight + actual request).
+    # Allowed origins: local dev + the deployed SWA frontend.
+    cors_rule {
+      allowed_origins = [
+        "http://localhost:4200",
+        "https://${azurerm_static_web_app.web.default_host_name}"
+      ]
+      allowed_methods    = ["PUT", "OPTIONS"]
+      allowed_headers    = ["*"]
+      exposed_headers    = ["ETag", "x-ms-request-id"]
+      max_age_in_seconds = 3600
+    }
+  }
 }
 
 # azurerm 4.x: storage_account_id (full resource ID), not storage_account_name.
