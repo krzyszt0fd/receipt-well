@@ -1,7 +1,11 @@
 using Azure.Identity;
+using Azure.Search.Documents;
+using Azure.Search.Documents.Indexes;
+using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
+using ReceiptWell.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +18,7 @@ if (!builder.Environment.IsDevelopment())
     var keyRingContainer = builder.Configuration["AzureStorage:KeyRingContainerName"];
     dataProtection.PersistKeysToAzureBlobStorage(
         new Uri($"https://{storageAccountName}.blob.core.windows.net/{keyRingContainer}/keys.xml"),
-        new DefaultAzureCredential());
+        new Azure.Identity.DefaultAzureCredential());
 }
 
 builder.Services.AddCors(options =>
@@ -40,6 +44,23 @@ builder.Services.AddAuthorization(options =>
         .RequireAuthenticatedUser()
         .Build();
 });
+var connectionString = builder.Configuration["AzureStorage:ConnectionString"];
+builder.Services.AddSingleton(_ => string.IsNullOrEmpty(connectionString)
+    ? new BlobServiceClient(
+        new Uri(builder.Configuration["AzureStorage:BlobServiceUri"]!),
+        new Azure.Identity.DefaultAzureCredential())
+    : new BlobServiceClient(connectionString!));
+
+var searchUri = new Uri(builder.Configuration["AzureSearch:ServiceUri"]!);
+var searchCredential = new Azure.AzureKeyCredential(builder.Configuration["AzureSearch:ApiKey"]!);
+builder.Services.AddSingleton(_ => new SearchIndexClient(searchUri, searchCredential));
+builder.Services.AddSingleton(_ => new SearchClient(
+    searchUri,
+    builder.Configuration["AzureSearch:IndexName"]!,
+    searchCredential,
+    new SearchClientOptions { Retry = { MaxRetries = 3 } }));
+builder.Services.AddHostedService<SearchIndexInitializer>();
+
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();

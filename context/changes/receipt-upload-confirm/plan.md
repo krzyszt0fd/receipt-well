@@ -436,14 +436,14 @@ The Azure AI Search index schema (all fields) is created idempotently at Phase 1
 
 #### Automated
 
-- [ ] 1.1 Backend builds without warnings: `dotnet build src/backend/ReceiptWell.csproj`
-- [ ] 1.2 `dotnet restore` updates `packages.lock.json` without errors
+- [x] 1.1 Backend builds without warnings: `dotnet build src/backend/ReceiptWell.csproj`
+- [x] 1.2 `dotnet restore` updates `packages.lock.json` without errors
 
 #### Manual
 
-- [ ] 1.3 Application starts and logs Information for index initialization
-- [ ] 1.4 Azure AI Search index visible in portal with all expected fields
-- [ ] 1.5 `GET /health` returns 200
+- [x] 1.3 Application starts and logs Information for index initialization
+- [x] 1.4 Azure AI Search index visible in portal with all expected fields
+- [x] 1.5 `GET /health` returns 200
 
 ### Phase 2: Staging Slot + Blob Upload
 

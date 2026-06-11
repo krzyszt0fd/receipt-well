@@ -63,6 +63,36 @@ variable "github_deploy_branch" {
   description = "Branch name for the GitHub Actions OIDC federated credential subject claim. Must match exactly: repo:<org>/<repo>:ref:refs/heads/<branch>."
 }
 
+variable "search_service_name" {
+  type        = string
+  default     = "receipt-well-search"
+  description = "Azure AI Search service name. Must be globally unique (*.search.windows.net)."
+}
+
+variable "search_sku" {
+  type        = string
+  default     = "free"
+  description = "Azure AI Search SKU. Use 'free' for MVP (1 index, 50 MB, 1 service per subscription). Change to 'basic' if a Free tier service already exists in the subscription."
+}
+
+variable "search_index_name" {
+  type        = string
+  default     = "receipts"
+  description = "Name of the receipts index in Azure AI Search."
+}
+
+variable "staging_container_name" {
+  type        = string
+  default     = "receipt-staging"
+  description = "Blob container for SAS-upload staging. Blobs are deleted after 1 day by lifecycle policy."
+}
+
+variable "receipts_container_name" {
+  type        = string
+  default     = "receipts"
+  description = "Blob container for confirmed receipt blobs."
+}
+
 variable "external_id_authority" {
   type        = string
   description = "Entra External ID (CIAM) authority URL — {tenant-id}.ciamlogin.com/{tenant-id}/v2.0."

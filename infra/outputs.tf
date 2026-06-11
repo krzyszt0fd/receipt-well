@@ -64,3 +64,14 @@ output "azure_subscription_id" {
   value       = data.azurerm_client_config.current.subscription_id
   description = "Azure subscription ID. Paste as GitHub secret AZURE_SUBSCRIPTION_ID."
 }
+
+output "search_service_endpoint" {
+  value       = "https://${azurerm_search_service.main.name}.search.windows.net"
+  description = "Azure AI Search endpoint. Already wired into App Service app settings; informational only."
+}
+
+output "search_primary_key" {
+  value       = azurerm_search_service.main.primary_key
+  sensitive   = true
+  description = "Azure AI Search primary admin key. Inject into local dev user secrets as AzureSearch__ApiKey. Retrieve with: terraform output -raw search_primary_key"
+}

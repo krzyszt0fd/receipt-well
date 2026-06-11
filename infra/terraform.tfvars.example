@@ -23,3 +23,10 @@ github_org = "your-github-username-or-org"
 # oidc_app_registration_name = "receipt-well-github-deploy"
 # github_repo           = "receipt-well"
 # github_deploy_branch  = "develop"
+
+# --- Search & storage (S-01) ---
+# search_service_name     = "receipt-well-search"
+# search_sku              = "free"   # change to "basic" if a Free tier service exists in the subscription
+# search_index_name       = "receipts"
+# staging_container_name  = "receipt-staging"
+# receipts_container_name = "receipts"
