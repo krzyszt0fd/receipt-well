@@ -1,10 +1,13 @@
+using System.Text.Json;
 using Azure.Search.Documents;
 using Azure.Search.Documents.Indexes;
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using ReceiptWell.Services;
+using ReceiptWell.Services.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -60,7 +63,9 @@ builder.Services.AddSingleton(_ => new SearchClient(
     new SearchClientOptions { Retry = { MaxRetries = 3 } }));
 builder.Services.AddHostedService<SearchIndexInitializer>();
 
-builder.Services.AddHealthChecks();
+builder.Services.AddHealthChecks()
+    .AddCheck<BlobStorageHealthCheck>("blob-storage")
+    .AddCheck<SearchHealthCheck>("azure-search");
 
 var app = builder.Build();
 
@@ -74,6 +79,23 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapHealthChecks("/health").AllowAnonymous();
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var result = JsonSerializer.Serialize(new
+        {
+            status = report.Status.ToString(),
+            checks = report.Entries.Select(e => new
+            {
+                name = e.Key,
+                status = e.Value.Status.ToString(),
+                description = e.Value.Description
+            })
+        });
+        await context.Response.WriteAsync(result);
+    }
+}).AllowAnonymous();
 
 app.Run();
