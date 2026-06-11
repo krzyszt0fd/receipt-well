@@ -1,5 +1,4 @@
 using Azure.Search.Documents.Indexes;
-using Azure.Search.Documents.Indexes.Models;
 
 namespace ReceiptWell.Models;
 
