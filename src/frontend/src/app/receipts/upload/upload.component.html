@@ -33,9 +33,15 @@
       </mat-card-content>
 
       <mat-card-actions align="end">
-        <button mat-raised-button color="primary" type="button" (click)="tryAgain()">
-          Try again
-        </button>
+        @if (retriable()) {
+          <button mat-raised-button color="primary" type="button" (click)="tryAgain()">
+            Try again
+          </button>
+        } @else {
+          <button mat-raised-button color="primary" type="button" (click)="reset()">
+            Upload another
+          </button>
+        }
       </mat-card-actions>
     } @else {
       <mat-card-header>

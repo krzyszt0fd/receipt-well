@@ -36,3 +36,10 @@
 - **Problem**: Plan stated "No Terraform changes — those resources must already exist." Resources didn't exist at implementation time; provisioning landed in an unplanned commit (8d81356) without documentation, causing a scope discipline violation in review.
 - **Rule**: Before writing "What We're NOT Doing: no Terraform changes", verify the target resources actually exist. If they don't, scope the Terraform provisioning explicitly in the plan — include which resources to create, in which .tf file, and what App Service env wiring is needed.
 - **Applies to**: /10x-plan (when authoring any plan that depends on cloud infrastructure); /10x-plan-review — flag if a plan says "resources must already exist" without evidence they do.
+
+## 400 errors are not retriable — distinguish validation failures from transient errors in the UI
+
+- **Context**: Any UI component that calls a backend API and shows an error state with a recovery action.
+- **Problem**: A generic "Try again" button is correct for transient failures (network errors, 5xx) but wrong for 400s. A 400 means the request itself is invalid; retrying it without changing the input will always fail again. Showing "Try again" traps the user in an unrecoverable loop.
+- **Rule**: On a 400 response, show an action that resets the form or starts over (e.g. "Try a different file", "Go back") rather than retrying the same request. Extract and display the error message from the RFC 7807 Problem Details body (https://datatracker.ietf.org/doc/html/rfc7807): prefer `detail`, then the first entry in `errors` (field-level messages, e.g. ASP.NET Core `ValidationProblemDetails`), then `title`. On 5xx or network failure, keep the retriable error path.
+- **Applies to**: every UI component that handles API errors; plan the retriable vs. non-retriable error states and their recovery actions upfront in the component contract.

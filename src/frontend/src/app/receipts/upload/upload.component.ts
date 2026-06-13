@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -24,6 +25,7 @@ export class UploadComponent {
   readonly stagingBlobName = signal<string | null>(null);
   readonly confirmedReceipt = signal<{ fileName: string; fileSize: number } | null>(null);
   readonly errorMessage = signal<string | null>(null);
+  readonly retriable = signal(true);
 
   readonly formattedFileSize = computed(() => {
     const receipt = this.confirmedReceipt();
@@ -73,16 +75,14 @@ export class UploadComponent {
     try {
       slot = await firstValueFrom(this.receiptService.getStagingSlot());
     } catch (err) {
-      this.errorMessage.set(err instanceof Error ? err.message : 'Failed to prepare upload. Please try again.');
-      this.state.set('error');
+      this.handleError(err, 'Failed to prepare upload. Please try again.');
       return;
     }
 
     try {
       await this.receiptService.uploadToBlob(slot.stagingUri, file);
     } catch (err) {
-      this.errorMessage.set(err instanceof Error ? err.message : 'Upload failed. Please try again.');
-      this.state.set('error');
+      this.handleError(err, 'Upload failed. Please try again.');
       return;
     }
 
@@ -111,6 +111,7 @@ export class UploadComponent {
     this.confirmedReceipt.set(null);
     this.errorMessage.set(null);
     this.validationError.set(null);
+    this.retriable.set(true);
   }
 
   private async confirmStaged(originalFileName: string): Promise<void> {
@@ -122,8 +123,22 @@ export class UploadComponent {
       this.confirmedReceipt.set({ fileName: result.fileName, fileSize: result.fileSize });
       this.state.set('confirmed');
     } catch (err) {
-      this.errorMessage.set(err instanceof Error ? err.message : 'Confirmation failed. Please try again.');
-      this.state.set('error');
+      this.handleError(err, 'Confirmation failed. Please try again.');
     }
+  }
+
+  private handleError(err: unknown, fallback: string): void {
+    if (err instanceof HttpErrorResponse && err.status === 400) {
+      this.retriable.set(false);
+      const body = err.error;
+      const firstFieldError = body?.errors
+        ? (Object.values(body.errors as Record<string, string[]>)[0]?.[0])
+        : undefined;
+      this.errorMessage.set(body?.detail ?? firstFieldError ?? body?.title ?? fallback);
+    } else {
+      this.retriable.set(true);
+      this.errorMessage.set(err instanceof Error ? err.message : fallback);
+    }
+    this.state.set('error');
   }
 }
