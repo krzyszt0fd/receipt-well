@@ -469,34 +469,34 @@ The Azure AI Search index schema (all fields) is created idempotently at Phase 1
 
 #### Automated
 
-- [x] 2.0 Angular Material + CDK + Animations installed; indigo-pink theme applied; `ng build` succeeds
-- [x] 2.1 Backend builds: `dotnet build src/backend/ReceiptWell.csproj`
-- [x] 2.2 Frontend builds: `ng build` (from `src/frontend/`)
-- [x] 2.3 Unit tests pass: `ng test`
+- [x] 2.0 Angular Material + CDK + Animations installed; indigo-pink theme applied; `ng build` succeeds — a3765e1
+- [x] 2.1 Backend builds: `dotnet build src/backend/ReceiptWell.csproj` — a3765e1
+- [x] 2.2 Frontend builds: `ng build` (from `src/frontend/`) — a3765e1
+- [x] 2.3 Unit tests pass: `ng test` — a3765e1
 
 #### Manual
 
-- [x] 2.4 `/home` redirects to `/home/upload` and shows upload form
-- [x] 2.5 File > 10 MB shows inline validation error without a network call
-- [x] 2.6 Invalid file type shows inline validation error without a network call
-- [x] 2.7 Valid JPEG submit → staging blob appears in Azure Storage
-- [x] 2.8 Authenticated request to `environment.apiUrl` carries an `Authorization: Bearer` header
+- [x] 2.4 `/home` redirects to `/home/upload` and shows upload form — a3765e1
+- [x] 2.5 File > 10 MB shows inline validation error without a network call — a3765e1
+- [x] 2.6 Invalid file type shows inline validation error without a network call — a3765e1
+- [x] 2.7 Valid JPEG submit → staging blob appears in Azure Storage — a3765e1
+- [x] 2.8 Authenticated request to `environment.apiUrl` carries an `Authorization: Bearer` header — a3765e1
 
 ### Phase 3: Confirm + Azure AI Search + Confirmation UX
 
 #### Automated
 
-- [ ] 3.1 Backend builds: `dotnet build src/backend/ReceiptWell.csproj`
-- [ ] 3.2 Frontend builds: `ng build` (from `src/frontend/`)
-- [ ] 3.3 Unit tests pass: `ng test`
+- [x] 3.1 Backend builds: `dotnet build src/backend/ReceiptWell.csproj`
+- [x] 3.2 Frontend builds: `ng build` (from `src/frontend/`)
+- [x] 3.3 Unit tests pass: `ng test`
 
 #### Manual
 
-- [ ] 3.4 Full flow: valid JPEG → spinner → confirmation panel with filename and size
-- [ ] 3.5 Receipt blob at `{userId}/{receiptId}.jpg` in receipts container
-- [ ] 3.6 No blob remains in staging container after confirm
-- [ ] 3.7 Receipt document in Azure AI Search with `status: "pending"` and correct fields
-- [ ] 3.8 Simulated search failure → error state in Angular UI + Error in backend console + staging blob still present
-- [ ] 3.9 Retry with same `stagingBlobName` after restoring API key → succeeds; one blob in receipts, no duplicate
-- [ ] 3.10 "Upload another" resets form to idle
-- [ ] 3.11 Mobile emulation: file input shows camera/gallery picker
+- [x] 3.4 Full flow: valid JPEG → spinner → confirmation panel with filename and size
+- [x] 3.5 Receipt blob at `{userId}/{receiptId}.jpg` in receipts container
+- [x] 3.6 No blob remains in staging container after confirm
+- [x] 3.7 Receipt document in Azure AI Search with `status: "pending"` and correct fields
+- [x] 3.8 Simulated search failure → error state in Angular UI + Error in backend console + staging blob still present
+- [x] 3.9 Retry with same `stagingBlobName` after restoring API key → succeeds; one blob in receipts, no duplicate
+- [x] 3.10 "Upload another" resets form to idle
+- [x] 3.11 Mobile emulation: file input shows camera/gallery picker

@@ -16,3 +16,14 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 ###
+
+POST {{receipt_well_HostAddress}}/receipts/confirm
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "stagingBlobName": "",
+  "originalFileName": ""
+}
+
+###

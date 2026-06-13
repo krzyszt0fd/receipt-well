@@ -14,6 +14,13 @@ export class ReceiptService {
     );
   }
 
+  confirmUpload(stagingBlobName: string, originalFileName: string): Observable<{ receiptId: string; fileName: string; fileSize: number }> {
+    return this.http.post<{ receiptId: string; fileName: string; fileSize: number }>(
+      `${environment.apiUrl}/receipts/confirm`,
+      { stagingBlobName, originalFileName }
+    );
+  }
+
   async uploadToBlob(sasUri: string, file: File): Promise<void> {
     const response = await fetch(sasUri, {
       method: 'PUT',

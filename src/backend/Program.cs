@@ -65,6 +65,7 @@ builder.Services.AddSingleton(_ => new SearchClient(
     new SearchClientOptions { Retry = { MaxRetries = 3 } }));
 builder.Services.AddHostedService<SearchIndexInitializer>();
 builder.Services.AddScoped<ReceiptBlobService>();
+builder.Services.AddScoped<ReceiptConfirmService>();
 
 builder.Services.AddHealthChecks()
     .AddCheck<BlobStorageHealthCheck>("blob-storage")
@@ -121,4 +122,45 @@ app.MapPost("/receipts/staging-slot", async (
     }
 });
 
+app.MapPost("/receipts/confirm", async (
+    HttpContext httpContext,
+    ReceiptConfirmService confirmService,
+    ILoggerFactory loggerFactory,
+    ConfirmRequest request) =>
+{
+    var confirmLogger = loggerFactory.CreateLogger("receipts-confirm");
+    var userId = httpContext.User.FindFirstValue("oid")
+        ?? throw new InvalidOperationException("oid claim missing");
+    try
+    {
+        var result = await confirmService.ConfirmUploadAsync(
+            request.StagingBlobName, userId, request.OriginalFileName);
+
+        return result switch
+        {
+            ReceiptConfirmResult.Forbidden { } => Results.Forbid(),
+            ReceiptConfirmResult.InvalidBlob invalid =>
+                Results.ValidationProblem(new Dictionary<string, string[]>
+                {
+                    ["file"] = [invalid.Message]
+                }),
+            ReceiptConfirmResult.Success success =>
+                Results.Ok(new
+                {
+                    receiptId = success.ReceiptId,
+                    fileName = success.FileName,
+                    fileSize = success.FileSize
+                }),
+            _ => throw new InvalidOperationException("Unexpected result type")
+        };
+    }
+    catch (Exception ex)
+    {
+        confirmLogger.LogError(ex, "Failed to confirm receipt upload for user {UserId}", userId);
+        return Results.Problem(statusCode: 500);
+    }
+});
+
 app.Run();
+
+record ConfirmRequest(string StagingBlobName, string OriginalFileName);

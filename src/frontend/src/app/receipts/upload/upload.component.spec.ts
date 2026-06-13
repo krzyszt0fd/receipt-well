@@ -6,7 +6,8 @@ import { ReceiptService } from '../receipt.service';
 
 const mockReceiptService = {
   getStagingSlot: () => of({ stagingUri: 'https://example.com/sas', stagingBlobName: 'user/guid' }),
-  uploadToBlob: () => Promise.resolve()
+  uploadToBlob: () => Promise.resolve(),
+  confirmUpload: () => of({ receiptId: 'guid', fileName: 'receipt.jpg', fileSize: 12345 })
 };
 
 describe('UploadComponent', () => {

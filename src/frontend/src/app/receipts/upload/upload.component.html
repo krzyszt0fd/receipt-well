@@ -1,58 +1,97 @@
 <div class="upload-page">
   <mat-card class="upload-card">
-    <mat-card-header>
-      <mat-card-title>Upload Receipt</mat-card-title>
-      <mat-card-subtitle>PNG · JPEG · WEBP · GIF &nbsp;·&nbsp; Max 20 MB</mat-card-subtitle>
-    </mat-card-header>
+    @if (state() === 'confirmed') {
+      <mat-card-header>
+        <mat-card-title>Receipt Uploaded</mat-card-title>
+        <mat-card-subtitle>Your receipt has been saved successfully.</mat-card-subtitle>
+      </mat-card-header>
 
-    <mat-card-content>
-      <div class="file-zone" [class.file-zone--selected]="selectedFile()">
-        <label for="file-input" class="file-zone__label">
-          <mat-icon class="file-zone__icon" aria-hidden="true">upload_file</mat-icon>
-          <span class="file-zone__text">
-            @if (selectedFile(); as f) {
-              {{ f.name }}
-            } @else {
-              Tap to select a receipt photo
-            }
-          </span>
-          <input
-            id="file-input"
-            type="file"
-            class="file-zone__input"
-            accept=".png,.jpg,.jpeg,.webp,.gif"
-            capture="environment"
-            [disabled]="state() === 'uploading'"
-            (change)="onFileSelected($event)"
-          />
-        </label>
-      </div>
+      <mat-card-content>
+        <div class="confirm-panel">
+          <mat-icon class="confirm-icon" aria-hidden="true">check_circle</mat-icon>
+          <p class="confirm-filename">{{ confirmedReceipt()!.fileName }}</p>
+          <p class="confirm-size">{{ formattedFileSize() }}</p>
+        </div>
+      </mat-card-content>
 
-      @if (validationError()) {
+      <mat-card-actions align="end">
+        <button mat-raised-button color="primary" type="button" (click)="reset()">
+          Upload another
+        </button>
+      </mat-card-actions>
+    } @else if (state() === 'error') {
+      <mat-card-header>
+        <mat-card-title>Upload Failed</mat-card-title>
+        <mat-card-subtitle>Something went wrong.</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
         <span role="alert" class="validation-error">
           <mat-icon aria-hidden="true">error_outline</mat-icon>
-          {{ validationError() }}
+          {{ errorMessage() }}
         </span>
-      }
-    </mat-card-content>
+      </mat-card-content>
 
-    <mat-card-actions align="end">
-      @if (state() === 'uploading') {
-        <span class="uploading-row">
-          <mat-spinner diameter="24" />
-          <span>Uploading…</span>
-        </span>
-      } @else {
-        <button
-          mat-raised-button
-          color="primary"
-          type="button"
-          [disabled]="!selectedFile()"
-          (click)="submit()"
-        >
-          Upload
+      <mat-card-actions align="end">
+        <button mat-raised-button color="primary" type="button" (click)="tryAgain()">
+          Try again
         </button>
-      }
-    </mat-card-actions>
+      </mat-card-actions>
+    } @else {
+      <mat-card-header>
+        <mat-card-title>Upload Receipt</mat-card-title>
+        <mat-card-subtitle>PNG · JPEG · WEBP · GIF &nbsp;·&nbsp; Max 20 MB</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="file-zone" [class.file-zone--selected]="selectedFile()">
+          <label for="file-input" class="file-zone__label">
+            <mat-icon class="file-zone__icon" aria-hidden="true">upload_file</mat-icon>
+            <span class="file-zone__text">
+              @if (selectedFile(); as f) {
+                {{ f.name }}
+              } @else {
+                Tap to select a receipt photo
+              }
+            </span>
+            <input
+              id="file-input"
+              type="file"
+              class="file-zone__input"
+              accept=".png,.jpg,.jpeg,.webp,.gif"
+              capture="environment"
+              [disabled]="state() === 'uploading'"
+              (change)="onFileSelected($event)"
+            />
+          </label>
+        </div>
+
+        @if (validationError()) {
+          <span role="alert" class="validation-error">
+            <mat-icon aria-hidden="true">error_outline</mat-icon>
+            {{ validationError() }}
+          </span>
+        }
+      </mat-card-content>
+
+      <mat-card-actions align="end">
+        @if (state() === 'uploading') {
+          <span class="uploading-row">
+            <mat-spinner diameter="24" />
+            <span>Uploading…</span>
+          </span>
+        } @else {
+          <button
+            mat-raised-button
+            color="primary"
+            type="button"
+            [disabled]="!selectedFile()"
+            (click)="submit()"
+          >
+            Upload
+          </button>
+        }
+      </mat-card-actions>
+    }
   </mat-card>
 </div>
