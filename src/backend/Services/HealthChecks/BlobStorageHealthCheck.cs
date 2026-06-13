@@ -3,13 +3,14 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace ReceiptWell.Services.HealthChecks;
 
-internal sealed class BlobStorageHealthCheck(BlobServiceClient client) : IHealthCheck
+internal sealed class BlobStorageHealthCheck(BlobServiceClient client, IConfiguration config) : IHealthCheck
 {
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext context, CancellationToken cancellationToken)
     {
         try
         {
-            await client.GetPropertiesAsync(cancellationToken);
+            var containerName = config["AzureStorage:StagingContainerName"]!;
+            await client.GetBlobContainerClient(containerName).GetPropertiesAsync(cancellationToken: cancellationToken);
             return HealthCheckResult.Healthy();
         }
         catch (Exception ex)
