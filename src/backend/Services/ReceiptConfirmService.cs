@@ -2,6 +2,7 @@ using Azure;
 using Azure.Search.Documents;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Sas;
 using ReceiptWell.Models;
 
 namespace ReceiptWell.Services;
@@ -17,10 +18,11 @@ public partial class ReceiptConfirmService(
     BlobServiceClient blobServiceClient,
     SearchClient searchClient,
     IConfiguration configuration,
+    DelegationTokenProvider delegationTokenProvider,
     ILogger<ReceiptConfirmService> logger)
 {
     private static readonly HashSet<string> AllowedContentTypes =
-        ["image/png", "image/jpeg", "image/webp", "image/gif"];
+        new(StringComparer.OrdinalIgnoreCase) { "image/png", "image/jpeg", "image/webp", "image/gif" };
     private const long MaxFileSize = 20_000_000;
 
     private readonly string _stagingContainerName =
@@ -58,6 +60,13 @@ public partial class ReceiptConfirmService(
             return new ReceiptConfirmResult.InvalidBlob($"Content type '{stagingProperties.ContentType}' is not allowed.");
         }
 
+        var headerBytes = await DownloadFirstBytesAsync(stagingBlob, 16);
+        if (!MatchesMagicBytes(stagingProperties.ContentType, headerBytes))
+        {
+            LogValidationFailure(logger, stagingBlobName, $"Magic bytes do not match declared ContentType '{stagingProperties.ContentType}'");
+            return new ReceiptConfirmResult.InvalidBlob("File content does not match the declared content type.");
+        }
+
         if (stagingProperties.ContentLength > MaxFileSize)
         {
             LogValidationFailure(logger, stagingBlobName, $"ContentLength {stagingProperties.ContentLength} exceeds limit");
@@ -75,17 +84,8 @@ public partial class ReceiptConfirmService(
         var receiptsContainer = blobServiceClient.GetBlobContainerClient(_receiptsContainerName);
         var targetBlob = receiptsContainer.GetBlobClient(targetBlobName);
 
-        var downloadResponse = await stagingBlob.DownloadContentAsync();
-        await targetBlob.UploadAsync(
-            downloadResponse.Value.Content.ToStream(),
-            new BlobUploadOptions
-            {
-                HttpHeaders = new BlobHttpHeaders
-                {
-                    ContentType = stagingProperties.ContentType,
-                    ContentDisposition = stagingProperties.ContentDisposition
-                }
-            });
+        var stagingReadSasUri = await GenerateReadSasAsync(stagingBlob);
+        await targetBlob.SyncCopyFromUriAsync(stagingReadSasUri);
 
         var targetBlobUrl = targetBlob.Uri.ToString();
         var receiptDocument = new ReceiptDocument
@@ -120,6 +120,47 @@ public partial class ReceiptConfirmService(
 
         LogReceiptConfirmed(logger, userId, receiptId);
         return new ReceiptConfirmResult.Success(receiptId, originalFileName, stagingProperties.ContentLength);
+    }
+
+    private static async Task<byte[]> DownloadFirstBytesAsync(BlobClient blob, int count)
+    {
+        var response = await blob.DownloadContentAsync(new BlobDownloadOptions { Range = new HttpRange(0, count) });
+        return response.Value.Content.ToArray();
+    }
+
+    private static bool MatchesMagicBytes(string contentType, byte[] bytes)
+    {
+        if (bytes.Length < 4) return false;
+        return contentType.ToLowerInvariant() switch
+        {
+            "image/png"  => bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47,
+            "image/jpeg" => bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF,
+            "image/webp" => bytes.Length >= 12
+                && bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46
+                && bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50,
+            "image/gif"  => bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x38,
+            _ => false
+        };
+    }
+
+    private async Task<Uri> GenerateReadSasAsync(BlobClient blob)
+    {
+        var sasExpiry = DateTimeOffset.UtcNow.AddMinutes(5);
+        var sasBuilder = new BlobSasBuilder
+        {
+            BlobContainerName = blob.BlobContainerName,
+            BlobName = blob.Name,
+            Resource = "b",
+            ExpiresOn = sasExpiry
+        };
+        sasBuilder.SetPermissions(BlobSasPermissions.Read);
+
+        if (blob.CanGenerateSasUri)
+            return blob.GenerateSasUri(sasBuilder);
+
+        var key = await delegationTokenProvider.GetOrFetchAsync();
+        var queryParams = sasBuilder.ToSasQueryParameters(key, blobServiceClient.AccountName);
+        return new BlobUriBuilder(blob.Uri) { Sas = queryParams }.ToUri();
     }
 
     [LoggerMessage(Level = LogLevel.Warning,

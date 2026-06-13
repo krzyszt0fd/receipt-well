@@ -29,3 +29,10 @@
 - **Problem**: CIAM tokens carry `iss = https://{tenant-id}.ciamlogin.com/{tenant-id}/v2.0`. If the backend `Authority` is set to a `login.microsoftonline.com` URL or a friendly-name CIAM URL, the JwtBearer middleware fetches the wrong discovery document, discovers a different issuer, and rejects every token with "issuer is invalid". Consumer users can't call the API; internal Entra accounts still work, hiding the misconfiguration.
 - **Rule**: For both frontend MSAL and backend JwtBearer, always use `https://{tenant-id}.ciamlogin.com/{tenant-id}/v2.0` as the authority/issuer. Backend value goes in `dotnet user-secrets set "AzureExternalId:Authority" "https://{tenant-id}.ciamlogin.com/{tenant-id}/v2.0"`. Frontend value goes in `environment.local.ts` (already set). After changing user secrets, restart the backend — JwtBearer caches the discovery doc at startup.
 - **Applies to**: environment setup, backend user secrets, provisioning
+
+## Infrastructure provisioning: verify resources exist before calling them out-of-scope in a plan
+
+- **Context**: `infra/*.tf` — any plan phase that depends on cloud infrastructure (Azure AI Search, Blob Storage, App Service, etc.)
+- **Problem**: Plan stated "No Terraform changes — those resources must already exist." Resources didn't exist at implementation time; provisioning landed in an unplanned commit (8d81356) without documentation, causing a scope discipline violation in review.
+- **Rule**: Before writing "What We're NOT Doing: no Terraform changes", verify the target resources actually exist. If they don't, scope the Terraform provisioning explicitly in the plan — include which resources to create, in which .tf file, and what App Service env wiring is needed.
+- **Applies to**: /10x-plan (when authoring any plan that depends on cloud infrastructure); /10x-plan-review — flag if a plan says "resources must already exist" without evidence they do.

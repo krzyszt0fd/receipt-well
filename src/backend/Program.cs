@@ -63,6 +63,8 @@ builder.Services.AddSingleton(_ => new SearchClient(
     builder.Configuration["AzureSearch:IndexName"]!,
     searchCredential,
     new SearchClientOptions { Retry = { MaxRetries = 3 } }));
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<DelegationTokenProvider>();
 builder.Services.AddHostedService<SearchIndexInitializer>();
 builder.Services.AddScoped<ReceiptBlobService>();
 builder.Services.AddScoped<ReceiptConfirmService>();

@@ -6,6 +6,7 @@ namespace ReceiptWell.Services;
 
 public partial class ReceiptBlobService(
     BlobServiceClient blobServiceClient,
+    DelegationTokenProvider delegationTokenProvider,
     IConfiguration configuration,
     ILogger<ReceiptBlobService> logger)
 {
@@ -37,11 +38,7 @@ public partial class ReceiptBlobService(
         }
         else
         {
-            var key = await blobServiceClient.GetUserDelegationKeyAsync(
-                new BlobGetUserDelegationKeyOptions(sasExpiry)
-                {
-                    StartsOn = DateTimeOffset.UtcNow.AddMinutes(-5)
-                });
+            var key = await delegationTokenProvider.GetOrFetchAsync();
             var queryParams = sasBuilder.ToSasQueryParameters(key, blobServiceClient.AccountName);
             sasUri = new BlobUriBuilder(blobClient.Uri) { Sas = queryParams }.ToUri();
         }

@@ -35,6 +35,7 @@ Authenticated user navigates to `/home` → redirected to `/home/upload` → sel
 - No logout or navigation bar — deferred to S-02.
 - No upload progress percentage — the MSAL interceptor does not expose upload progress; bypassing it for streaming adds complexity out of scope for S-01.
 - No Terraform changes to the Azure AI Search or Blob Storage resources themselves — those resources must already exist. This plan only wires the application layer.
+- **Addendum (commit 8d81356):** Resources did not yet exist at implementation time; provisioning was added here — Azure AI Search service, storage account, three containers, blob lifecycle management policy (1-day TTL on staging), and App Service environment variable wiring.
 - No staging container lifecycle rule in application code — that is a one-time Terraform side-effect (delete blobs older than 1 day on the staging container) done outside this plan.
 
 ## Implementation Approach
