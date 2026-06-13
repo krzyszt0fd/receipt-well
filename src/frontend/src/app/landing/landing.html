@@ -1,0 +1,26 @@
+<div class="page">
+  <mat-card class="page-card">
+    <mat-card-header>
+      <mat-card-title>Receipt Well</mat-card-title>
+      <mat-card-subtitle>Sign in to manage your receipts</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="landing-brand">
+        <mat-icon class="landing-icon" aria-hidden="true">receipt_long</mat-icon>
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      <button
+        mat-raised-button
+        color="primary"
+        type="button"
+        (click)="signIn()"
+        aria-label="Sign in to ReceiptWell"
+      >
+        Sign In
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>

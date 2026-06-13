@@ -1,3 +1,4 @@
+@use 'styles/colors' as c;
 @import '@angular/material/prebuilt-themes/indigo-pink.css';
 
 *,
@@ -9,4 +10,18 @@
 body {
   margin: 0;
   font-family: Roboto, 'Helvetica Neue', sans-serif;
+}
+
+.page {
+  display: flex;
+  justify-content: center;
+  padding: 32px 16px;
+  min-height: 100dvh;
+  background-color: c.$bg-page;
+}
+
+.page-card {
+  width: 100%;
+  max-width: 480px;
+  height: fit-content;
 }

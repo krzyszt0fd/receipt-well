@@ -1,17 +1,17 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { MsalService } from '@azure/msal-angular';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
 import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-landing',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <main>
-      <h1>ReceiptWell</h1>
-      <button type="button" (click)="signIn()" aria-label="Sign in to ReceiptWell">Sign In</button>
-    </main>
-  `
+  imports: [MatCardModule, MatButtonModule, MatIconModule],
+  templateUrl: './landing.html',
+  styleUrl: './landing.scss'
 })
 export class LandingComponent implements OnInit {
   private readonly msalService = inject(MsalService);
