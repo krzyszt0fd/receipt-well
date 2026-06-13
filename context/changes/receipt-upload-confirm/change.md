@@ -1,9 +1,9 @@
 ---
 change_id: receipt-upload-confirm
 title: Receipt upload confirmation flow
-status: implementing
+status: implemented
 created: 2026-06-07
-updated: 2026-06-12
+updated: 2026-06-13
 archived_at: null
 ---
 

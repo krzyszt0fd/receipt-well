@@ -486,17 +486,17 @@ The Azure AI Search index schema (all fields) is created idempotently at Phase 1
 
 #### Automated
 
-- [x] 3.1 Backend builds: `dotnet build src/backend/ReceiptWell.csproj`
-- [x] 3.2 Frontend builds: `ng build` (from `src/frontend/`)
-- [x] 3.3 Unit tests pass: `ng test`
+- [x] 3.1 Backend builds: `dotnet build src/backend/ReceiptWell.csproj` — 9712476
+- [x] 3.2 Frontend builds: `ng build` (from `src/frontend/`) — 9712476
+- [x] 3.3 Unit tests pass: `ng test` — 9712476
 
 #### Manual
 
-- [x] 3.4 Full flow: valid JPEG → spinner → confirmation panel with filename and size
-- [x] 3.5 Receipt blob at `{userId}/{receiptId}.jpg` in receipts container
-- [x] 3.6 No blob remains in staging container after confirm
-- [x] 3.7 Receipt document in Azure AI Search with `status: "pending"` and correct fields
-- [x] 3.8 Simulated search failure → error state in Angular UI + Error in backend console + staging blob still present
-- [x] 3.9 Retry with same `stagingBlobName` after restoring API key → succeeds; one blob in receipts, no duplicate
-- [x] 3.10 "Upload another" resets form to idle
-- [x] 3.11 Mobile emulation: file input shows camera/gallery picker
+- [x] 3.4 Full flow: valid JPEG → spinner → confirmation panel with filename and size — 9712476
+- [x] 3.5 Receipt blob at `{userId}/{receiptId}.jpg` in receipts container — 9712476
+- [x] 3.6 No blob remains in staging container after confirm — 9712476
+- [x] 3.7 Receipt document in Azure AI Search with `status: "pending"` and correct fields — 9712476
+- [x] 3.8 Simulated search failure → error state in Angular UI + Error in backend console + staging blob still present — 9712476
+- [x] 3.9 Retry with same `stagingBlobName` after restoring API key → succeeds; one blob in receipts, no duplicate — 9712476
+- [x] 3.10 "Upload another" resets form to idle — 9712476
+- [x] 3.11 Mobile emulation: file input shows camera/gallery picker — 9712476
