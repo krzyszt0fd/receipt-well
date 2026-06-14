@@ -555,17 +555,17 @@ No automated test project is added (user decision). Verification is build-time (
 
 #### Automated
 
-- [x] 1.0 Move/rename gate — `dotnet build src/backend/ReceiptWell.Web/ReceiptWell.Web.csproj` passes with zero warnings
-- [x] 1.1 Solution builds with zero warnings (`dotnet build src/backend/ReceiptWell.sln`)
-- [x] 1.2 NuGet lock files refreshed (`dotnet restore`)
-- [x] 1.3 Frontend builds (`npm --prefix src/frontend run build`)
-- [x] 1.4 Frontend unit tests pass (`npm --prefix src/frontend test`)
+- [x] 1.0 Move/rename gate — `dotnet build src/backend/ReceiptWell.Web/ReceiptWell.Web.csproj` passes with zero warnings — d731c2d
+- [x] 1.1 Solution builds with zero warnings (`dotnet build src/backend/ReceiptWell.sln`) — d731c2d
+- [x] 1.2 NuGet lock files refreshed (`dotnet restore`) — d731c2d
+- [x] 1.3 Frontend builds (`npm --prefix src/frontend run build`) — d731c2d
+- [x] 1.4 Frontend unit tests pass (`npm --prefix src/frontend test`) — d731c2d
 
 #### Manual
 
-- [x] 1.5 Existing upload/confirm flow still works (no regression from model move)
-- [x] 1.6 `.gif` rejected by the file picker with updated message
-- [x] 1.7 `src/backend/README.md` commands match new solution structure; `dotnet run` starts the API
+- [x] 1.5 Existing upload/confirm flow still works (no regression from model move) — d731c2d
+- [x] 1.6 `.gif` rejected by the file picker with updated message — d731c2d
+- [x] 1.7 `src/backend/README.md` commands match new solution structure; `dotnet run` starts the API — d731c2d
 
 ### Phase 2: Queue Producer in the API
 
