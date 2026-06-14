@@ -22,10 +22,10 @@ jobs:
           dotnet-version: '9.x'
 
       - name: Restore
-        run: dotnet restore src/backend/ReceiptWell.csproj
+        run: dotnet restore src/backend/ReceiptWell.Web/ReceiptWell.Web.csproj
 
       - name: Build & Publish
-        run: dotnet publish src/backend/ReceiptWell.csproj -c Release -o ./publish
+        run: dotnet publish src/backend/ReceiptWell.Web/ReceiptWell.Web.csproj -c Release -o ./publish
 
       - name: Azure Login (OIDC)
         uses: azure/login@v2

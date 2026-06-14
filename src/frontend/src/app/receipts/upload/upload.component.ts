@@ -37,7 +37,7 @@ export class UploadComponent {
     return `${Math.round(bytes / 1_000)} KB`;
   });
 
-  private readonly ALLOWED_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
+  private readonly ALLOWED_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
   private readonly MAX_SIZE = 20_000_000;
 
   onFileSelected(event: Event): void {
@@ -50,7 +50,7 @@ export class UploadComponent {
     }
 
     if (!this.ALLOWED_TYPES.has(file.type)) {
-      this.validationError.set('Unsupported file type. Please choose a PNG, JPEG, WEBP, or GIF.');
+      this.validationError.set('Unsupported file type. Please choose a PNG, JPEG, or WEBP.');
       this.selectedFile.set(null);
       return;
     }

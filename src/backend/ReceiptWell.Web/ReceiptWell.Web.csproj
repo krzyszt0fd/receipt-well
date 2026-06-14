@@ -13,4 +13,8 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ReceiptWell.Core\ReceiptWell.Core.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -46,7 +46,7 @@
     } @else {
       <mat-card-header>
         <mat-card-title>Upload Receipt</mat-card-title>
-        <mat-card-subtitle>PNG · JPEG · WEBP · GIF &nbsp;·&nbsp; Max 20 MB</mat-card-subtitle>
+        <mat-card-subtitle>PNG · JPEG · WEBP &nbsp;·&nbsp; Max 20 MB</mat-card-subtitle>
       </mat-card-header>
 
       <mat-card-content>
@@ -64,7 +64,7 @@
               id="file-input"
               type="file"
               class="file-zone__input"
-              accept=".png,.jpg,.jpeg,.webp,.gif"
+              accept=".png,.jpg,.jpeg,.webp"
               capture="environment"
               [disabled]="state() === 'uploading'"
               (change)="onFileSelected($event)"

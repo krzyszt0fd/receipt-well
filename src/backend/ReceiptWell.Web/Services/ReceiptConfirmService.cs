@@ -22,7 +22,7 @@ public partial class ReceiptConfirmService(
     ILogger<ReceiptConfirmService> logger)
 {
     private static readonly HashSet<string> AllowedContentTypes =
-        new(StringComparer.OrdinalIgnoreCase) { "image/png", "image/jpeg", "image/webp", "image/gif" };
+        new(StringComparer.OrdinalIgnoreCase) { "image/png", "image/jpeg", "image/webp" };
     private const long MaxFileSize = 20_000_000;
 
     private readonly string _stagingContainerName =
@@ -95,7 +95,7 @@ public partial class ReceiptConfirmService(
             BlobUrl = targetBlobUrl,
             FileName = originalFileName,
             FileSize = stagingProperties.ContentLength,
-            Status = "pending",
+            Status = ReceiptStatus.Pending,
             UploadedAt = DateTimeOffset.UtcNow
         };
 
@@ -138,7 +138,6 @@ public partial class ReceiptConfirmService(
             "image/webp" => bytes.Length >= 12
                 && bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46
                 && bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50,
-            "image/gif"  => bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x38,
             _ => false
         };
     }

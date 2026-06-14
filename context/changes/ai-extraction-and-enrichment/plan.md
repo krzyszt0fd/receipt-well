@@ -10,6 +10,7 @@ When a receipt is confirmed it lands in the Azure AI Search index with `Status =
 - **The write-back mechanism already exists.** `src/backend/Services/ReceiptConfirmService.cs:104` writes the pending document via `searchClient.MergeOrUploadDocumentsAsync`. The Function reuses the identical call to merge the enrichment fields and the new status — `MergeOrUpload` is idempotent, which underpins the redelivery and retry decisions below.
 - **The confirm endpoint emits nothing.** `src/backend/Program.cs:127-164` writes the pending doc synchronously and returns. There is no queue, no event, no downstream trigger today — the entire producer side is net-new.
 - **No async out-of-process worker exists.** The only async-worker precedent is the in-process `IHostedService` `SearchIndexInitializer` (`src/backend/Program.cs:68`). There is no Azure Functions project anywhere under `src/`.
+- **API project lives flat at `src/backend/`.** `ReceiptWell.csproj` sits directly at `src/backend/ReceiptWell.csproj` with no project subdirectory. It must be moved to `src/backend/ReceiptWell.Web/` before Core and Functions siblings are added, to avoid cross-sibling path churn. `Directory.Build.props` and `Directory.Packages.props` remain at `src/backend/` and propagate to all children via MSBuild directory traversal.
 - **The index is built from the model by the API.** `SearchIndexInitializer` calls `new FieldBuilder().Build(typeof(ReceiptDocument))`. After the model moves to `ReceiptWell.Core`, the API keeps ownership of index creation; the Function only reads/merges.
 - **Auth posture is mixed.** Blob + Key Vault use managed identity (`Program.cs:55,24`); Azure Search uses an API key (`Program.cs:59`, `infra/search.tf:16` `local_authentication_enabled = true`). The storage clients use the empty-connection-string → MI switch (`Program.cs:52`).
 - **Not provisioned (must be scoped here per `lessons.md`):** no `azurerm_cognitive_account` (Azure OpenAI), no Storage Queue, no Function App in `infra/`. `infra/role_assignments.tf` grants the API's MI only `Key Vault Secrets User` and `Storage Blob Data Contributor`.
@@ -80,15 +81,36 @@ Local/Azure isolation is achieved by the **Azurite emulator** (a physically sepa
 
 ### Overview
 
-Extract the shared index model into `ReceiptWell.Core`, introduce a solution file, and remove GIF from both the backend and frontend upload contracts.
+Extract the shared index model into `ReceiptWell.Core`, introduce a solution file, and remove GIF from both the backend and frontend upload contracts. The phase opens with moving the API project into its own subdirectory (`ReceiptWell.Web`) — a gated step that must produce a clean `dotnet build` before anything else starts.
 
 ### Changes Required:
 
-#### 1. New shared class library
+#### 1. Move and rename the API project to ReceiptWell.Web
 
-**File**: `src/backend/ReceiptWell.Core/ReceiptWell.Core.csproj` (new), `src/backend/ReceiptWell.Core/ReceiptDocument.cs` (moved)
+**File**: `src/backend/ReceiptWell.Web/ReceiptWell.Web.csproj` (moved from `src/backend/ReceiptWell.csproj`)
 
-**Intent**: Create a minimal class library holding `ReceiptDocument` (and any status constants) so the API and the Function depend on one definition of the frozen schema. Move `ReceiptDocument` out of `src/backend/Models/`.
+**Intent**: Move the API project into a dedicated subdirectory and rename it to `ReceiptWell.Web`, so `src/backend/` becomes a clean parent that holds all project siblings (Core, Web, Functions) at the same level. Changes 2–5 only begin after `dotnet build` passes at the new path.
+
+**Contract**: Use `git mv` to preserve file history. The following files remain at `src/backend/` and are NOT moved: `Directory.Build.props`, `Directory.Packages.props`, `.editorconfig`, `.gitignore`, `README.md`. These propagate to child projects via MSBuild directory traversal — nothing to copy. `UserSecretsId` (`receipt-well-api`) stays in the renamed `.csproj` unchanged — no user-secrets migration. `RootNamespace` (`ReceiptWell`) is inherited from `Directory.Build.props` — no namespace changes. Also update `.github/workflows/backend-deploy.yml` lines 25–28: replace `src/backend/ReceiptWell.csproj` with `src/backend/ReceiptWell.Web/ReceiptWell.Web.csproj`.
+
+**Scaffolding** — run from `src/backend/`:
+
+```bash
+mkdir ReceiptWell.Web
+git mv ReceiptWell.csproj ReceiptWell.Web/ReceiptWell.Web.csproj
+git mv Program.cs ReceiptWell.Web/
+git mv appsettings.json ReceiptWell.Web/
+git mv appsettings.Development.json ReceiptWell.Web/
+git mv Services ReceiptWell.Web/
+git mv Models ReceiptWell.Web/
+dotnet build ReceiptWell.Web/ReceiptWell.Web.csproj   # gate: must pass before continuing
+```
+
+#### 2. New shared class library
+
+**File**: `src/backend/ReceiptWell.Core/ReceiptWell.Core.csproj` (new), `src/backend/ReceiptWell.Core/ReceiptDocument.cs` (moved from `src/backend/ReceiptWell.Web/Models/`)
+
+**Intent**: Create a minimal class library holding `ReceiptDocument` (and any status constants) so the API and the Function depend on one definition of the frozen schema. Move `ReceiptDocument` out of `src/backend/ReceiptWell.Web/Models/`.
 
 **Contract**: `ReceiptWell.Core` targets `net9.0`, references `Azure.Search.Documents` (for the `[SimpleField]`/`[SearchableField]` attributes), participates in Central Package Management. Namespace remains `ReceiptWell.Models` (or `ReceiptWell.Core`) — pick one and update both consumers. Introduce a `ReceiptStatus` constants holder (`Pending`/`Ready`/`Error`) used by both the API and the Function instead of string literals.
 
@@ -98,40 +120,40 @@ Extract the shared index model into `ReceiptWell.Core`, introduce a solution fil
 cd src/backend
 dotnet new classlib -n ReceiptWell.Core -o ReceiptWell.Core -f net9.0
 rm ReceiptWell.Core/Class1.cs                      # drop the template type
-git mv Models/ReceiptDocument.cs ReceiptWell.Core/ReceiptDocument.cs
+git mv ReceiptWell.Web/Models/ReceiptDocument.cs ReceiptWell.Core/ReceiptDocument.cs
 dotnet add ReceiptWell.Core/ReceiptWell.Core.csproj package Azure.Search.Documents
 # CPM: strip the Version attribute the CLI injects into the .csproj — the
 # version already lives in Directory.Packages.props. Then refresh the lock file.
 dotnet restore
 ```
 
-#### 2. API references Core; solution file
+#### 3. API references Core; solution file
 
-**File**: `src/backend/ReceiptWell.csproj`, `src/backend/ReceiptWell.sln` (new)
+**File**: `src/backend/ReceiptWell.Web/ReceiptWell.Web.csproj`, `src/backend/ReceiptWell.sln` (new)
 
 **Intent**: Reference `ReceiptWell.Core` from the API and add a `.sln` tying the projects together for local builds and CI.
 
-**Contract**: `<ProjectReference Include="ReceiptWell.Core/ReceiptWell.Core.csproj" />`; remove the old model file reference; `SearchIndexInitializer` and `ReceiptConfirmService` use the relocated type. Index ownership stays in the API (`FieldBuilder().Build(typeof(ReceiptDocument))`).
+**Contract**: `<ProjectReference Include="../ReceiptWell.Core/ReceiptWell.Core.csproj" />`; `SearchIndexInitializer` and `ReceiptConfirmService` use the relocated type. Index ownership stays in the API (`FieldBuilder().Build(typeof(ReceiptDocument))`).
 
 **Scaffolding** — create the solution and wire references via the `dotnet` CLI:
 
 ```bash
 cd src/backend
 dotnet new sln -n ReceiptWell
-dotnet sln ReceiptWell.sln add ReceiptWell.csproj ReceiptWell.Core/ReceiptWell.Core.csproj
-dotnet add ReceiptWell.csproj reference ReceiptWell.Core/ReceiptWell.Core.csproj
+dotnet sln ReceiptWell.sln add ReceiptWell.Web/ReceiptWell.Web.csproj ReceiptWell.Core/ReceiptWell.Core.csproj
+dotnet add ReceiptWell.Web/ReceiptWell.Web.csproj reference ReceiptWell.Core/ReceiptWell.Core.csproj
 dotnet build ReceiptWell.sln          # confirm zero-warning build after the model move
 ```
 
-#### 3. Remove GIF from backend allowlist
+#### 4. Remove GIF from backend allowlist
 
-**File**: `src/backend/Services/ReceiptConfirmService.cs`
+**File**: `src/backend/ReceiptWell.Web/Services/ReceiptConfirmService.cs`
 
 **Intent**: Reject GIF server-side. Remove `image/gif` from `AllowedContentTypes` and delete the `image/gif` branch in `MatchesMagicBytes`.
 
 **Contract**: `AllowedContentTypes` = `{ image/png, image/jpeg, image/webp }`. The magic-bytes switch loses its `image/gif` case (returns the `_ => false` default for GIF).
 
-#### 4. Remove GIF from frontend upload
+#### 5. Remove GIF from frontend upload
 
 **File**: `src/frontend/src/app/receipts/upload/upload.component.ts`, `upload.component.html`
 
@@ -139,10 +161,29 @@ dotnet build ReceiptWell.sln          # confirm zero-warning build after the mod
 
 **Contract**: `ALLOWED_TYPES` drops `image/gif` (`upload.component.ts:40`); the validation message drops "GIF" (`:53`); `accept=".png,.jpg,.jpeg,.webp"` (`upload.component.html:67`); subtitle reads `PNG · JPEG · WEBP · Max 20 MB` (`:49`).
 
+#### 6. Update backend README
+
+**File**: `src/backend/README.md`
+
+**Intent**: After the solution builds cleanly, rewrite the README so the commands section reflects the new multi-project layout. The current README references bare `dotnet build` (no path) and a `dotnet test` line for a test project that does not exist.
+
+**Contract**: The README stays at `src/backend/` and is written after Change 3 (solution file) succeeds. Replace the Commands section with:
+
+- `dotnet build ReceiptWell.sln` — build the whole solution
+- `dotnet run --project ReceiptWell.Web/ReceiptWell.Web.csproj -lp "https"` — run the API (`http://localhost:5191` / `https://localhost:7028`)
+- `dotnet restore ReceiptWell.sln` — restore packages and refresh lock files
+
+Add a brief Projects section listing:
+- `ReceiptWell.Web/` — ASP.NET Core 9.0 minimal API
+- `ReceiptWell.Core/` — shared model library (`ReceiptDocument`, `ReceiptStatus`)
+
+Drop the `dotnet test` line — no test project exists yet.
+
 ### Success Criteria:
 
 #### Automated Verification:
 
+- Move/rename gate: `dotnet build src/backend/ReceiptWell.Web/ReceiptWell.Web.csproj` passes with zero warnings (prerequisite to changes 2–5)
 - Solution builds with zero warnings: `dotnet build src/backend/ReceiptWell.sln`
 - NuGet lock files refreshed: `dotnet restore src/backend/ReceiptWell.sln`
 - Frontend builds: `npm --prefix src/frontend run build`
@@ -152,6 +193,7 @@ dotnet build ReceiptWell.sln          # confirm zero-warning build after the mod
 
 - Existing receipt upload/confirm flow still works end-to-end (no regression from the model move).
 - A `.gif` file is rejected by the file picker with the updated message.
+- `src/backend/README.md` commands match the new solution structure and `dotnet run` starts the API correctly.
 
 **Implementation Note**: After completing this phase and all automated verification passes, pause for manual confirmation before proceeding.
 
@@ -167,7 +209,7 @@ After the pending document is written, the confirm endpoint enqueues the `receip
 
 #### 1. Queue client registration
 
-**File**: `src/backend/Program.cs`
+**File**: `src/backend/ReceiptWell.Web/Program.cs`
 
 **Intent**: Register a `QueueClient` (or `QueueServiceClient`) using the same empty-connection-string → `DefaultAzureCredential` switch already used for blobs.
 
@@ -175,7 +217,7 @@ After the pending document is written, the confirm endpoint enqueues the `receip
 
 #### 2. Enqueue on confirm
 
-**File**: `src/backend/Services/ReceiptConfirmService.cs`
+**File**: `src/backend/ReceiptWell.Web/Services/ReceiptConfirmService.cs`
 
 **Intent**: After `MergeOrUploadDocumentsAsync` succeeds, enqueue the `receiptId`. If the enqueue throws, log Error and propagate so the endpoint returns 500.
 
@@ -185,7 +227,7 @@ After the pending document is written, the confirm endpoint enqueues the `receip
 
 #### 3. Config defaults + example collection
 
-**File**: `src/backend/appsettings.json`, `src/backend/appsettings.Development.json`, `receipt-well.http`
+**File**: `src/backend/ReceiptWell.Web/appsettings.json`, `src/backend/ReceiptWell.Web/appsettings.Development.json`, `receipt-well.http`
 
 **Intent**: Add structural (empty/localhost) defaults for the new queue keys and keep the request collection accurate.
 
@@ -498,9 +540,9 @@ No automated test project is added (user decision). Verification is build-time (
 
 - Internal research: `context/changes/ai-extraction-and-enrichment/research.md`
 - External research: `context/changes/ai-extraction-and-enrichment/vision-model-research.md`
-- Write-back pattern: `src/backend/Services/ReceiptConfirmService.cs:91-104`
-- MI/connection switch: `src/backend/Program.cs:52-56`
-- Frozen schema: `src/backend/Models/ReceiptDocument.cs:28-35`
+- Write-back pattern: `src/backend/ReceiptWell.Web/Services/ReceiptConfirmService.cs:91-104` (post-Phase-1 path)
+- MI/connection switch: `src/backend/ReceiptWell.Web/Program.cs:52-56` (post-Phase-1 path)
+- Frozen schema: `src/backend/ReceiptWell.Core/ReceiptDocument.cs` (moved to Core in Phase 1)
 - Role-assignment pattern: `infra/role_assignments.tf:5-19`
 - Infra plan & risks: `context/foundation/infrastructure.md`
 - Lessons (verify resources exist; 400 vs transient): `context/foundation/lessons.md:33-45`
@@ -513,15 +555,17 @@ No automated test project is added (user decision). Verification is build-time (
 
 #### Automated
 
-- [ ] 1.1 Solution builds with zero warnings (`dotnet build src/backend/ReceiptWell.sln`)
-- [ ] 1.2 NuGet lock files refreshed (`dotnet restore`)
-- [ ] 1.3 Frontend builds (`npm --prefix src/frontend run build`)
-- [ ] 1.4 Frontend unit tests pass (`npm --prefix src/frontend test`)
+- [x] 1.0 Move/rename gate — `dotnet build src/backend/ReceiptWell.Web/ReceiptWell.Web.csproj` passes with zero warnings
+- [x] 1.1 Solution builds with zero warnings (`dotnet build src/backend/ReceiptWell.sln`)
+- [x] 1.2 NuGet lock files refreshed (`dotnet restore`)
+- [x] 1.3 Frontend builds (`npm --prefix src/frontend run build`)
+- [x] 1.4 Frontend unit tests pass (`npm --prefix src/frontend test`)
 
 #### Manual
 
-- [ ] 1.5 Existing upload/confirm flow still works (no regression from model move)
-- [ ] 1.6 `.gif` rejected by the file picker with updated message
+- [x] 1.5 Existing upload/confirm flow still works (no regression from model move)
+- [x] 1.6 `.gif` rejected by the file picker with updated message
+- [x] 1.7 `src/backend/README.md` commands match new solution structure; `dotnet run` starts the API
 
 ### Phase 2: Queue Producer in the API
 
