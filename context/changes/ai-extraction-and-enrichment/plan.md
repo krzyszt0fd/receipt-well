@@ -571,13 +571,13 @@ No automated test project is added (user decision). Verification is build-time (
 
 #### Automated
 
-- [ ] 2.1 Solution builds with zero warnings
-- [ ] 2.2 `dotnet restore` succeeds (Azure.Storage.Queues lock files updated)
+- [x] 2.1 Solution builds with zero warnings
+- [x] 2.2 `dotnet restore` succeeds (Azure.Storage.Queues lock files updated)
 
 #### Manual
 
-- [ ] 2.3 Confirm places exactly one `receiptId` message on the Azurite queue
-- [ ] 2.4 Simulated enqueue failure makes confirm return 500; pending doc exists; retry re-enqueues
+- [x] 2.3 Confirm places exactly one `receiptId` message on the Azurite queue
+- [x] 2.4 Simulated enqueue failure makes confirm return 500; pending doc exists; retry re-enqueues
 
 ### Phase 3: Azure OpenAI Provisioning
 

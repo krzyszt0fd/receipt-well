@@ -3,6 +3,7 @@ using System.Text.Json;
 using Azure.Search.Documents;
 using Azure.Search.Documents.Indexes;
 using Azure.Storage.Blobs;
+using Azure.Storage.Queues;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
@@ -54,6 +55,21 @@ builder.Services.AddSingleton(_ => string.IsNullOrEmpty(connectionString)
         new Uri(builder.Configuration["AzureStorage:BlobServiceUri"]!),
         new Azure.Identity.DefaultAzureCredential())
     : new BlobServiceClient(connectionString!));
+
+var queueOptions = new QueueClientOptions { MessageEncoding = QueueMessageEncoding.Base64 };
+var extractionQueueName = builder.Configuration["AzureStorage:ExtractionQueueName"]!;
+builder.Services.AddSingleton(_ =>
+{
+    QueueServiceClient queueServiceClient = string.IsNullOrEmpty(connectionString)
+        ? new QueueServiceClient(
+            new Uri(builder.Configuration["AzureStorage:QueueServiceUri"]!),
+            new Azure.Identity.DefaultAzureCredential(),
+            queueOptions)
+        : new QueueServiceClient(connectionString, queueOptions);
+    var queueClient = queueServiceClient.GetQueueClient(extractionQueueName);
+    queueClient.CreateIfNotExists();
+    return queueClient;
+});
 
 var searchUri = new Uri(builder.Configuration["AzureSearch:ServiceUri"]!);
 var searchCredential = new Azure.AzureKeyCredential(builder.Configuration["AzureSearch:ApiKey"]!);

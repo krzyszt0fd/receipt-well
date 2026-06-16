@@ -2,6 +2,7 @@ using Azure;
 using Azure.Search.Documents;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Queues;
 using Azure.Storage.Sas;
 using ReceiptWell.Models;
 
@@ -17,6 +18,7 @@ public abstract record ReceiptConfirmResult
 public partial class ReceiptConfirmService(
     BlobServiceClient blobServiceClient,
     SearchClient searchClient,
+    QueueClient queueClient,
     IConfiguration configuration,
     DelegationTokenProvider delegationTokenProvider,
     ILogger<ReceiptConfirmService> logger)
@@ -111,6 +113,16 @@ public partial class ReceiptConfirmService(
 
         try
         {
+            await queueClient.SendMessageAsync(receiptId);
+        }
+        catch (Exception ex)
+        {
+            LogEnqueueFailed(logger, userId, receiptId, ex);
+            throw;
+        }
+
+        try
+        {
             await stagingBlob.DeleteAsync();
         }
         catch (Exception ex)
@@ -177,6 +189,10 @@ public partial class ReceiptConfirmService(
     [LoggerMessage(Level = LogLevel.Error,
         Message = "Azure AI Search write failed for receiptId {ReceiptId} blobUrl {BlobUrl}")]
     private static partial void LogSearchWriteFailed(ILogger logger, string receiptId, string blobUrl, Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Error,
+        Message = "Failed to enqueue receiptId {ReceiptId} for user {UserId}")]
+    private static partial void LogEnqueueFailed(ILogger logger, string userId, string receiptId, Exception ex);
 
     [LoggerMessage(Level = LogLevel.Warning,
         Message = "Failed to delete staging blob {StagingBlobName} after successful confirm")]
