@@ -571,27 +571,27 @@ No automated test project is added (user decision). Verification is build-time (
 
 #### Automated
 
-- [x] 2.1 Solution builds with zero warnings
-- [x] 2.2 `dotnet restore` succeeds (Azure.Storage.Queues lock files updated)
+- [x] 2.1 Solution builds with zero warnings — 91a9bf9
+- [x] 2.2 `dotnet restore` succeeds (Azure.Storage.Queues lock files updated) — 91a9bf9
 
 #### Manual
 
-- [x] 2.3 Confirm places exactly one `receiptId` message on the Azurite queue
-- [x] 2.4 Simulated enqueue failure makes confirm return 500; pending doc exists; retry re-enqueues
+- [x] 2.3 Confirm places exactly one `receiptId` message on the Azurite queue — 91a9bf9
+- [x] 2.4 Simulated enqueue failure makes confirm return 500; pending doc exists; retry re-enqueues — 91a9bf9
 
 ### Phase 3: Azure OpenAI Provisioning
 
 #### Automated
 
-- [ ] 3.1 `terraform fmt -check` passes
-- [ ] 3.2 `terraform validate` passes
-- [ ] 3.3 `terraform plan` shows only the new OpenAI account + deployment, no destructive changes
+- [x] 3.1 `terraform fmt -check` passes
+- [x] 3.2 `terraform validate` passes
+- [x] 3.3 `terraform plan` shows only the new OpenAI account + deployment, no destructive changes
 
 #### Manual
 
-- [ ] 3.4 `terraform apply` provisions account + GPT-4o deployment; smoke call returns a completion
-- [ ] 3.5 Deployment uses default content filter (no custom policy committed)
-- [ ] 3.6 No resource names/secrets written to git-tracked `.tf` files
+- [x] 3.4 `terraform apply` provisions account + GPT-4o deployment; smoke call returns a completion
+- [x] 3.5 Deployment uses default content filter (no custom policy committed)
+- [x] 3.6 No resource names/secrets written to git-tracked `.tf` files
 
 ### Phase 4: Azure Functions Extraction Worker
 

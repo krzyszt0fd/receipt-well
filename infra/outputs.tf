@@ -75,3 +75,19 @@ output "search_primary_key" {
   sensitive   = true
   description = "Azure AI Search primary admin key. Inject into local dev user secrets as AzureSearch__ApiKey. Retrieve with: terraform output -raw search_primary_key"
 }
+
+output "openai_endpoint" {
+  value       = azurerm_cognitive_account.openai.endpoint
+  description = "Azure OpenAI endpoint. Used for local Function user secrets (AzureOpenAI__Endpoint) and Phase 5 Function App settings."
+}
+
+output "openai_deployment_name" {
+  value       = azurerm_cognitive_deployment.gpt4o.name
+  description = "Azure OpenAI GPT-4o deployment name. Used as AzureOpenAI__DeploymentName."
+}
+
+output "openai_primary_key" {
+  value       = azurerm_cognitive_account.openai.primary_access_key
+  sensitive   = true
+  description = "Azure OpenAI primary access key. Inject into local Function user secrets as AzureOpenAI__ApiKey. Retrieve with: terraform output -raw openai_primary_key"
+}

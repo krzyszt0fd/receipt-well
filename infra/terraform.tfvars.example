@@ -7,6 +7,15 @@
 # Used in the OIDC federated credential subject: repo:<github_org>/<github_repo>:ref:refs/heads/<branch>
 github_org = "your-github-username-or-org"
 
+# Azure OpenAI (Cognitive Services) account name. Also used as the custom
+# subdomain — must be globally unique (*.openai.azure.com). No default in
+# variables.tf — set here only.
+openai_account_name = "your-globally-unique-openai-account-name"
+
+# Azure OpenAI GPT-4o model deployment name. No default in variables.tf —
+# set here only. "gpt-4o" is the conventional choice.
+openai_deployment_name = "your-deployment-name"
+
 # --- Optional overrides ---
 # All defaults match the CLI runbook names in context/changes/deployment/deployment-plan.md.
 # Uncomment and change only if you need non-default resource names.
@@ -30,3 +39,6 @@ github_org = "your-github-username-or-org"
 # search_index_name       = "receipts"
 # staging_container_name  = "receipt-staging"
 # receipts_container_name = "receipts"
+
+# --- Azure OpenAI (S-03) ---
+# openai_deployment_capacity = 8   # thousands of TPM, e.g. 8 = 8000 TPM

@@ -104,3 +104,19 @@ variable "external_id_client_id" {
   description = "Backend API app registration client ID in Entra External ID."
   default     = ""
 }
+
+variable "openai_account_name" {
+  type        = string
+  description = "Azure OpenAI (Cognitive Services) account name. Also used as the custom subdomain — must be globally unique (*.openai.azure.com). No default — set in terraform.tfvars (gitignored), not committed."
+}
+
+variable "openai_deployment_name" {
+  type        = string
+  description = "Azure OpenAI model deployment name, used as the deployment identifier the Function's IChatClient targets. No default — set in terraform.tfvars (gitignored), not committed."
+}
+
+variable "openai_deployment_capacity" {
+  type        = number
+  default     = 8
+  description = "GPT-4o deployment capacity in thousands of Tokens-per-Minute (TPM), e.g. 8 = 8000 TPM."
+}
