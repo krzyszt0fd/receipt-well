@@ -49,6 +49,11 @@ public partial class ExtractReceiptFunction(
             imageBytes = download.Value.Content.ToArray();
             contentType = download.Value.Details.ContentType;
         }
+        catch (RequestFailedException ex) when (IsTransient(ex))
+        {
+            LogTransientBlobDownloadFailure(logger, receiptId, ex);
+            throw; // let the queue retry up to maxDequeueCount
+        }
         catch (RequestFailedException ex)
         {
             // The receipt blob is missing or unreadable — terminal, not retriable.
@@ -84,7 +89,8 @@ public partial class ExtractReceiptFunction(
     {
         ClientResultException cre => cre.Status >= 500 || cre.Status == (int)HttpStatusCode.TooManyRequests,
         RequestFailedException rfe => rfe.Status >= 500 || rfe.Status == (int)HttpStatusCode.TooManyRequests,
-        HttpRequestException => true,
+        HttpRequestException { StatusCode: null } => true,
+        HttpRequestException hre => hre.StatusCode >= HttpStatusCode.InternalServerError || hre.StatusCode == HttpStatusCode.TooManyRequests,
         _ => false
     };
 
@@ -96,6 +102,9 @@ public partial class ExtractReceiptFunction(
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Failed to download receipt blob for {ReceiptId}")]
     private static partial void LogBlobDownloadFailed(ILogger logger, string receiptId, Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Transient blob download failure for {ReceiptId}; retrying")]
+    private static partial void LogTransientBlobDownloadFailure(ILogger logger, string receiptId, Exception ex);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Transient extraction failure for {ReceiptId}; retrying")]
     private static partial void LogTransientExtractionFailure(ILogger logger, string receiptId, Exception ex);
