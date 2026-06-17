@@ -613,15 +613,15 @@ No automated test project is added (user decision). Verification is build-time (
 
 #### Automated
 
-- [x] 5.1 `terraform fmt -check` passes
-- [x] 5.2 `terraform validate` passes
-- [x] 5.3 `terraform plan` shows only intended additions (queue, Function App, roles, app settings), no destructive changes
+- [x] 5.1 `terraform fmt -check` passes — 0b7945b
+- [x] 5.2 `terraform validate` passes — 0b7945b
+- [x] 5.3 `terraform plan` shows only intended additions (queue, Function App, roles, app settings), no destructive changes — 0b7945b
 
 #### Manual
 
-- [x] 5.4 `terraform apply` provisions queue + Function App cleanly
-- [x] 5.5 Function App and API identities show expected role assignments
-- [x] 5.6 No resource names/secrets written to git-tracked `.tf` files
+- [x] 5.4 `terraform apply` provisions queue + Function App cleanly — 0b7945b
+- [x] 5.5 Function App and API identities show expected role assignments — 0b7945b
+- [x] 5.6 No resource names/secrets written to git-tracked `.tf` files — 0b7945b
 
 ### Phase 6: CI/CD + End-to-End Validation
 
