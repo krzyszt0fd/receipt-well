@@ -627,7 +627,7 @@ No automated test project is added (user decision). Verification is build-time (
 
 #### Automated
 
-- [ ] 6.1 Function workflow YAML valid
+- [x] 6.1 Function workflow YAML valid
 - [ ] 6.2 Path filters trigger correctly (functions push triggers; backend-only push does not)
 - [ ] 6.3 Both workflows publish without build/restore errors in CI
 

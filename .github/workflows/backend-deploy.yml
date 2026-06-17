@@ -5,6 +5,7 @@ on:
     branches: [develop]
     paths:
       - 'src/backend/**'
+      - '!src/backend/ReceiptWell.Functions/**'
       - '.github/workflows/backend-deploy.yml'
 
 permissions:
@@ -25,7 +26,7 @@ jobs:
         run: dotnet restore src/backend/ReceiptWell.Web/ReceiptWell.Web.csproj
 
       - name: Build & Publish
-        run: dotnet publish src/backend/ReceiptWell.Web/ReceiptWell.Web.csproj -c Release -o ./publish
+        run: dotnet publish src/backend/ReceiptWell.Web/ReceiptWell.Web.csproj -c Release -o ./publish --no-restore
 
       - name: Azure Login (OIDC)
         uses: azure/login@v2
