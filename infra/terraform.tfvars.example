@@ -42,3 +42,8 @@ openai_deployment_name = "your-deployment-name"
 
 # --- Azure OpenAI (S-03) ---
 # openai_deployment_capacity = 8   # thousands of TPM, e.g. 8 = 8000 TPM
+
+# --- Azure Functions extraction worker (S-03) ---
+# function_service_plan_name = "receipt-well-functions-plan"
+# function_app_name          = "receipt-well-functions"
+# extraction_queue_name      = "receipt-extraction"

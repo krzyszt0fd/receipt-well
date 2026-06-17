@@ -57,6 +57,13 @@ resource "azurerm_storage_container" "receipts" {
 #
 # Azure allows only one azurerm_storage_management_policy per storage account.
 # Add further rules here as additional rule {} blocks if needed.
+# Extraction queue (S-03): the API enqueues receiptId after writing the pending
+# search doc; the Function App (functions.tf) dequeues it via AzureWebJobsStorage.
+resource "azurerm_storage_queue" "extraction" {
+  name               = var.extraction_queue_name
+  storage_account_id = azurerm_storage_account.main.id
+}
+
 resource "azurerm_storage_management_policy" "main" {
   storage_account_id = azurerm_storage_account.main.id
 

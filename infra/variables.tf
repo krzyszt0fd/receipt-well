@@ -120,3 +120,21 @@ variable "openai_deployment_capacity" {
   default     = 8
   description = "GPT-4o deployment capacity in thousands of Tokens-per-Minute (TPM), e.g. 8 = 8000 TPM."
 }
+
+variable "function_service_plan_name" {
+  type        = string
+  default     = "receipt-well-functions-plan"
+  description = "Service Plan name for the extraction Function App (Consumption Y1)."
+}
+
+variable "function_app_name" {
+  type        = string
+  default     = "receipt-well-functions"
+  description = "Windows Function App name for the S-03 extraction worker. Must be globally unique (*.azurewebsites.net)."
+}
+
+variable "extraction_queue_name" {
+  type        = string
+  default     = "receipt-extraction"
+  description = "Storage queue name for the S-03 extraction pipeline. Same name is used locally (Azurite) and in Azure — isolation comes from the endpoint, not the queue name."
+}

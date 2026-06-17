@@ -91,3 +91,13 @@ output "openai_primary_key" {
   sensitive   = true
   description = "Azure OpenAI primary access key. Inject into local Function user secrets as AzureOpenAI__ApiKey. Retrieve with: terraform output -raw openai_primary_key"
 }
+
+output "function_app_name" {
+  value       = azurerm_windows_function_app.extraction.name
+  description = "Function App resource name — used as app-name in the Functions GitHub Actions deploy workflow (Phase 6)."
+}
+
+output "function_app_principal_id" {
+  value       = azurerm_windows_function_app.extraction.identity[0].principal_id
+  description = "Function App's system-assigned Managed Identity object ID. Use to verify role assignments landed on the correct identity."
+}
