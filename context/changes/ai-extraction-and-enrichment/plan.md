@@ -597,17 +597,17 @@ No automated test project is added (user decision). Verification is build-time (
 
 #### Automated
 
-- [x] 4.1 Solution builds with zero warnings
-- [x] 4.2 `dotnet restore` succeeds with updated lock files
-- [x] 4.3 Function host starts locally (`func start` against Azurite)
+- [x] 4.1 Solution builds with zero warnings — a2e6402
+- [x] 4.2 `dotnet restore` succeeds with updated lock files — a2e6402
+- [x] 4.3 Function host starts locally (`func start` against Azurite) — a2e6402
 
 #### Manual
 
-- [x] 4.4 End-to-end local loop fills fields and flips `Status = ready`
-- [x] 4.5 Unreadable image lands at `Status = error` (no throw loop, no perpetual pending)
-- [x] 4.6 Redelivered message on an already-`ready` receipt is short-circuited
-- [x] 4.7 Tags are lowercased, trimmed, deduplicated, Polish
-- [x] 4.8 Retry-exhaustion routes to `-poison` queue; poison handler sets `Status = error`
+- [x] 4.4 End-to-end local loop fills fields and flips `Status = ready` — a2e6402
+- [x] 4.5 Unreadable image lands at `Status = error` (no throw loop, no perpetual pending) — a2e6402
+- [x] 4.6 Redelivered message on an already-`ready` receipt is short-circuited — a2e6402
+- [x] 4.7 Tags are lowercased, trimmed, deduplicated, Polish — a2e6402
+- [x] 4.8 Retry-exhaustion routes to `-poison` queue; poison handler sets `Status = error` — a2e6402
 
 ### Phase 5: Remaining Infrastructure (Terraform)
 
