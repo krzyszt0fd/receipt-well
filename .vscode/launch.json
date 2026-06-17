@@ -5,11 +5,37 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": ".NET: ReceiptWell Debug",
+            "name": ".NET: Web API",
             "type": "dotnet",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/src/backend/ReceiptWell.csproj"
+            "projectPath": "${workspaceFolder}/src/backend/ReceiptWell.Web/ReceiptWell.Web.csproj"
+        },
+         {
+            "name": ".NET: Functions",
+            "type": "dotnet",
+            "request": "launch",
+            "projectPath": "${workspaceFolder}/src/backend/ReceiptWell.Functions/ReceiptWell.Functions.csproj"
+        },
+        {
+            "name": "Frontend: ng serve",
+            "type": "chrome",
+            "request": "launch",
+            "preLaunchTask": "npm: start:local - src/frontend",
+            "url": "http://localhost:4200/",
+            "webRoot": "${workspaceFolder}/src/frontend"
+        },
+        {
+            "name": "Attach to .NET Functions",
+            "type": "coreclr",
+            "request": "attach",
+            "preLaunchTask": "func: host start",
+            "processId": ""
         }
-
+    ],
+    "compounds": [
+        {
+            "name": "Full Stack (Web API + Functions + Frontend)",
+            "configurations": [".NET: Web API", "Attach to .NET Functions", "Frontend: ng serve"]
+        }
     ]
 }

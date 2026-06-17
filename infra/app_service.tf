@@ -45,14 +45,14 @@ resource "azurerm_windows_web_app" "api" {
     "AzureStorage__AccountName"          = var.storage_account_name
     "AzureStorage__KeyRingContainerName" = "data-protection"
     # BlobServiceUri + empty ConnectionString → backend uses DefaultAzureCredential (managed identity).
-    "AzureStorage__BlobServiceUri"       = "https://${var.storage_account_name}.blob.core.windows.net"
+    "AzureStorage__BlobServiceUri"        = "https://${var.storage_account_name}.blob.core.windows.net"
     "AzureStorage__StagingContainerName"  = var.staging_container_name
     "AzureStorage__ReceiptsContainerName" = var.receipts_container_name
-    "AzureSearch__ServiceUri"  = "https://${azurerm_search_service.main.name}.search.windows.net"
-    "AzureSearch__IndexName"   = var.search_index_name
-    "AzureSearch__ApiKey"      = azurerm_search_service.main.primary_key
-    "AzureExternalId__Authority" = var.external_id_authority
-    "AzureExternalId__ClientId"  = var.external_id_client_id
+    "AzureSearch__ServiceUri"             = "https://${azurerm_search_service.main.name}.search.windows.net"
+    "AzureSearch__IndexName"              = var.search_index_name
+    "AzureSearch__ApiKey"                 = azurerm_search_service.main.primary_key
+    "AzureExternalId__Authority"          = var.external_id_authority
+    "AzureExternalId__ClientId"           = var.external_id_client_id
     # Required by azure/webapps-deploy@v3 for zip package deployment from GitHub Actions.
     "WEBSITE_RUN_FROM_PACKAGE" = "1"
   }

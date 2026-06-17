@@ -10,6 +10,7 @@ Never write hosting infrastructure details, secrets, keys, tokens, or PII into a
 - Contains only structural keys with empty or localhost defaults — no resource names, no account names, no hostnames, no tenant/subscription IDs.
 - Production values are injected by Azure App Service app settings (managed by Terraform) and override `appsettings.json` at runtime.
 - Local values that must not be committed go in `dotnet user-secrets` (`UserSecretsId` is set in `ReceiptWell.csproj`).
+- **Exception — Azurite:** the Azurite emulator's fixed well-known account name (`devstoreaccount1`), its default localhost endpoints (`http://127.0.0.1:10000/10001/10002`), and this project's own blob/queue container names (e.g. `receipts`, `receipt-staging`, `receipt-extraction`, `data-protection`) are identical on every developer machine and carry no production-specific information — these may be committed as defaults. The Azurite account *key* (also a fixed, publicly documented Microsoft constant) follows the same exception. This does not extend to any real Azure resource's account name, hostname, or container name.
 
 **`appsettings.Development.json` rules:**
 - Same restrictions as `appsettings.json`. Not gitignored — treat it as public.

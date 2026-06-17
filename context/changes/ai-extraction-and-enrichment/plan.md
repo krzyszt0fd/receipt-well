@@ -583,31 +583,31 @@ No automated test project is added (user decision). Verification is build-time (
 
 #### Automated
 
-- [x] 3.1 `terraform fmt -check` passes
-- [x] 3.2 `terraform validate` passes
-- [x] 3.3 `terraform plan` shows only the new OpenAI account + deployment, no destructive changes
+- [x] 3.1 `terraform fmt -check` passes — 0e43b48
+- [x] 3.2 `terraform validate` passes — 0e43b48
+- [x] 3.3 `terraform plan` shows only the new OpenAI account + deployment, no destructive changes — 0e43b48
 
 #### Manual
 
-- [x] 3.4 `terraform apply` provisions account + GPT-4o deployment; smoke call returns a completion
-- [x] 3.5 Deployment uses default content filter (no custom policy committed)
-- [x] 3.6 No resource names/secrets written to git-tracked `.tf` files
+- [x] 3.4 `terraform apply` provisions account + GPT-4o deployment; smoke call returns a completion — 0e43b48
+- [x] 3.5 Deployment uses default content filter (no custom policy committed) — 0e43b48
+- [x] 3.6 No resource names/secrets written to git-tracked `.tf` files — 0e43b48
 
 ### Phase 4: Azure Functions Extraction Worker
 
 #### Automated
 
-- [ ] 4.1 Solution builds with zero warnings
-- [ ] 4.2 `dotnet restore` succeeds with updated lock files
-- [ ] 4.3 Function host starts locally (`func start` against Azurite)
+- [x] 4.1 Solution builds with zero warnings
+- [x] 4.2 `dotnet restore` succeeds with updated lock files
+- [x] 4.3 Function host starts locally (`func start` against Azurite)
 
 #### Manual
 
-- [ ] 4.4 End-to-end local loop fills fields and flips `Status = ready`
-- [ ] 4.5 Unreadable image lands at `Status = error` (no throw loop, no perpetual pending)
-- [ ] 4.6 Redelivered message on an already-`ready` receipt is short-circuited
-- [ ] 4.7 Tags are lowercased, trimmed, deduplicated, Polish
-- [ ] 4.8 Retry-exhaustion routes to `-poison` queue; poison handler sets `Status = error`
+- [x] 4.4 End-to-end local loop fills fields and flips `Status = ready`
+- [x] 4.5 Unreadable image lands at `Status = error` (no throw loop, no perpetual pending)
+- [x] 4.6 Redelivered message on an already-`ready` receipt is short-circuited
+- [x] 4.7 Tags are lowercased, trimmed, deduplicated, Polish
+- [x] 4.8 Retry-exhaustion routes to `-poison` queue; poison handler sets `Status = error`
 
 ### Phase 5: Remaining Infrastructure (Terraform)
 

@@ -1,0 +1,38 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "npm",
+            "script": "start:local",
+            "path": "src/frontend",
+            "label": "npm: start:local - src/frontend",
+            "isBackground": true,
+            "problemMatcher": {
+                "owner": "typescript",
+                "pattern": "$tsc",
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": {
+                        "regexp": "Changes detected"
+                    },
+                    "endsPattern": {
+                        "regexp": "bundle generation (complete|failed)"
+                    }
+                }
+            }
+        },
+        {
+            "label": "func: host start",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "run"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/src\\backend\\ReceiptWell.Functions"
+            },
+            "isBackground": true,
+            "problemMatcher": "$func-dotnet-watch"
+        }
+    ]
+}

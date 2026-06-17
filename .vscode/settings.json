@@ -1,0 +1,9 @@
+{
+    "azureFunctions.projectSubpath": "src\\backend\\ReceiptWell.Functions",
+    "azureFunctions.deploySubpath": "src\\backend\\ReceiptWell.Functions/bin/Release/net9.0/publish",
+    "azureFunctions.projectLanguage": "C#",
+    "azureFunctions.projectRuntime": "~4",
+    "debug.internalConsoleOptions": "openOnSessionStart",
+    "azureFunctions.preDeployTask": "publish (functions)",
+    "azureFunctions.pickProcessTimeout": 120
+}
