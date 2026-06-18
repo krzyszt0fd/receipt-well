@@ -65,15 +65,24 @@ var queueOptions = new QueueClientOptions { MessageEncoding = QueueMessageEncodi
 var extractionQueueName = builder.Configuration["AzureStorage:ExtractionQueueName"]!;
 builder.Services.AddSingleton(_ =>
 {
-    QueueServiceClient queueServiceClient = string.IsNullOrEmpty(connectionString)
-        ? new QueueServiceClient(
+    // Azure: the queue is provisioned by Terraform (infra/storage.tf) and the API's
+    // MI deliberately holds only "Storage Queue Data Message Sender" (send-only,
+    // see role_assignments.tf) — it lacks the permission to create a queue, so
+    // CreateIfNotExists must not run against Azure. Azurite has no such
+    // provisioning step, so local dev still creates the queue on first use.
+    if (string.IsNullOrEmpty(connectionString))
+    {
+        var queueServiceClient = new QueueServiceClient(
             new Uri(builder.Configuration["AzureStorage:QueueServiceUri"]!),
             new Azure.Identity.DefaultAzureCredential(),
-            queueOptions)
-        : new QueueServiceClient(connectionString, queueOptions);
-    var queueClient = queueServiceClient.GetQueueClient(extractionQueueName);
-    queueClient.CreateIfNotExists();
-    return queueClient;
+            queueOptions);
+        return queueServiceClient.GetQueueClient(extractionQueueName);
+    }
+
+    var localQueueServiceClient = new QueueServiceClient(connectionString, queueOptions);
+    var localQueueClient = localQueueServiceClient.GetQueueClient(extractionQueueName);
+    localQueueClient.CreateIfNotExists();
+    return localQueueClient;
 });
 
 var searchUri = new Uri(builder.Configuration["AzureSearch:ServiceUri"]!);

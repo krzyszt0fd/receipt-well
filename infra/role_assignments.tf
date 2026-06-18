@@ -29,6 +29,16 @@ resource "azurerm_role_assignment" "api_storage_queue_sender" {
   principal_type       = "ServicePrincipal"
 }
 
+# Read-only queue metadata access for the API's /health check (QueueHealthCheck
+# calls QueueClient.GetPropertiesAsync). Message Sender alone does not cover
+# this — it only grants the messages/add data action.
+resource "azurerm_role_assignment" "api_storage_queue_reader" {
+  scope                = azurerm_storage_account.main.id
+  role_definition_name = "Storage Queue Data Reader"
+  principal_id         = azurerm_windows_web_app.api.identity[0].principal_id
+  principal_type       = "ServicePrincipal"
+}
+
 # S-03 extraction worker (functions.tf). Identity-based AzureWebJobsStorage
 # requires the host itself — not just the queue trigger — to hold these roles:
 # Storage Blob Data Owner for host state/leases, Storage Queue Data Contributor

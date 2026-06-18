@@ -42,6 +42,15 @@ resource "azurerm_windows_web_app" "api" {
     application_logs {
       file_system_level = "Information"
     }
+
+    # Preserves the http_logs retention Azure had already defaulted to;
+    # omitting this block would make Terraform clear it on apply.
+    http_logs {
+      file_system {
+        retention_in_days = 1
+        retention_in_mb   = 35
+      }
+    }
   }
 
   app_settings = {
