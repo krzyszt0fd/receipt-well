@@ -633,6 +633,6 @@ No automated test project is added (user decision). Verification is build-time (
 
 #### Manual
 
-- [ ] 6.4 Deployed Function processes a receipt end-to-end (`pending → ready`)
-- [ ] 6.5 Real-receipt batch (5–10 Polish receipts) assessed for hallucination + tag usefulness
+- [x] 6.4 Deployed Function processes a receipt end-to-end (`pending → ready`)
+- [x] 6.5 Real-receipt batch (5–10 Polish receipts) assessed for hallucination + tag usefulness
 - [ ] 6.6 Content-filter/unreadable receipt lands at `Status = error`, visible on S-02 list

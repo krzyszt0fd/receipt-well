@@ -21,8 +21,14 @@ public sealed class ReceiptExtractionService(IChatClient chatClient)
         "branded product rather than a service, also include separate tags for its kind/category, its " +
         "manufacturer or brand, and its model or variant name when visible on the receipt — e.g. for " +
         "\"Jogurt Danone Activia\" produce [\"jogurt\", \"danone\", \"activia\"]. Favor more descriptive " +
-        "tags over fewer generic ones. Use null for any field you cannot read with confidence. Do not " +
-        "invent data that is not visible on the receipt.";
+        "tags over fewer generic ones. Only tag distinct purchased products or services that appear as " +
+        "their own priced line item. Never produce a tag from receipt boilerplate: price adjustments " +
+        "(\"promocja\", \"zniżka\", \"obniżka\", \"rabat\"), delivery/fulfillment fees (\"dostawa\", " +
+        "\"kurier\", \"wysyłka\"), or any other non-product text such as payment method, return/exchange " +
+        "policy notices, loyalty-program text, store address, or legal/footer disclaimers. If a fragment " +
+        "of such boilerplate text is unclear or partially cut off, that is exactly the kind of text to " +
+        "drop, not approximate into a tag. Use null for any field you cannot read with confidence. Do " +
+        "not invent data that is not visible on the receipt.";
 
     public async Task<ReceiptExtractionResult> ExtractAsync(
         byte[] imageBytes, string contentType, CancellationToken cancellationToken)

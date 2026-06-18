@@ -35,7 +35,7 @@
     "compounds": [
         {
             "name": "Full Stack (Web API + Functions + Frontend)",
-            "configurations": [".NET: Web API", "Attach to .NET Functions", "Frontend: ng serve"]
+            "configurations": [".NET: Web API", ".NET: Functions", "Frontend: ng serve"]
         }
     ]
 }
