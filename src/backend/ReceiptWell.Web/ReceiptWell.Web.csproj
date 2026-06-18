@@ -12,6 +12,7 @@
     <PackageReference Include="Azure.Storage.Queues" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.Extensions.Logging.AzureAppServices" />
   </ItemGroup>
 
   <ItemGroup>

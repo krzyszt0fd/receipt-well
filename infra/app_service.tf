@@ -38,6 +38,12 @@ resource "azurerm_windows_web_app" "api" {
     use_32_bit_worker = true
   }
 
+  logs {
+    application_logs {
+      file_system_level = "Information"
+    }
+  }
+
   app_settings = {
     # AllowedOrigins__0 uses the SWA computed hostname. Terraform resolves this
     # dependency automatically: SWA is created first, then this setting is applied.

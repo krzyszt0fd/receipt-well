@@ -13,6 +13,11 @@ using ReceiptWell.Services.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Windows App Service's "Application Logging (Filesystem)" feature only captures
+// output from this provider (ETW-based) — the default Console logger is invisible
+// to it. No-op outside Azure App Service (checks for the App Service environment).
+builder.Logging.AddAzureWebAppDiagnostics();
+
 builder.Services.AddOpenApi();
 
 var dataProtection = builder.Services.AddDataProtection();
@@ -87,7 +92,8 @@ builder.Services.AddScoped<ReceiptConfirmService>();
 
 builder.Services.AddHealthChecks()
     .AddCheck<BlobStorageHealthCheck>("blob-storage")
-    .AddCheck<SearchHealthCheck>("azure-search");
+    .AddCheck<SearchHealthCheck>("azure-search")
+    .AddCheck<QueueHealthCheck>("storage-queue");
 
 var app = builder.Build();
 
