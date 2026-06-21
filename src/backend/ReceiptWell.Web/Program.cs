@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using System.Text.Json;
 using Azure.Search.Documents;
 using Azure.Search.Documents.Indexes;
@@ -8,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using ReceiptWell.Extensions;
 using ReceiptWell.Services;
 using ReceiptWell.Services.HealthChecks;
 
@@ -98,6 +98,7 @@ builder.Services.AddSingleton<DelegationTokenProvider>();
 builder.Services.AddHostedService<SearchIndexInitializer>();
 builder.Services.AddScoped<ReceiptBlobService>();
 builder.Services.AddScoped<ReceiptConfirmService>();
+builder.Services.AddScoped<ReceiptQueryService>();
 
 builder.Services.AddHealthChecks()
     .AddCheck<BlobStorageHealthCheck>("blob-storage")
@@ -141,8 +142,7 @@ app.MapPost("/receipts/staging-slot", async (
     ILoggerFactory loggerFactory) =>
 {
     var endpointLogger = loggerFactory.CreateLogger("receipts-staging-slot");
-    var userId = httpContext.User.FindFirstValue("oid")
-        ?? throw new InvalidOperationException("oid claim missing");
+    var userId = httpContext.User.GetUserId();
     try
     {
         var (sasUri, stagingBlobName) = await blobService.CreateStagingSlotAsync(userId);
@@ -162,8 +162,7 @@ app.MapPost("/receipts/confirm", async (
     ConfirmRequest request) =>
 {
     var confirmLogger = loggerFactory.CreateLogger("receipts-confirm");
-    var userId = httpContext.User.FindFirstValue("oid")
-        ?? throw new InvalidOperationException("oid claim missing");
+    var userId = httpContext.User.GetUserId();
     try
     {
         var result = await confirmService.ConfirmUploadAsync(
@@ -190,6 +189,26 @@ app.MapPost("/receipts/confirm", async (
     catch (Exception ex)
     {
         confirmLogger.LogError(ex, "Failed to confirm receipt upload for user {UserId}", userId);
+        return Results.Problem(statusCode: 500);
+    }
+});
+
+app.MapGet("/receipts", async (
+    HttpContext httpContext,
+    ReceiptQueryService queryService,
+    ILoggerFactory loggerFactory,
+    CancellationToken cancellationToken) =>
+{
+    var endpointLogger = loggerFactory.CreateLogger("receipts-list");
+    var userId = httpContext.User.GetUserId();
+    try
+    {
+        var summaries = await queryService.GetReceiptsAsync(userId, cancellationToken);
+        return Results.Ok(summaries);
+    }
+    catch (Exception ex)
+    {
+        endpointLogger.LogError(ex, "Failed to list receipts for user {UserId}", userId);
         return Results.Problem(statusCode: 500);
     }
 });

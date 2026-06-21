@@ -279,15 +279,15 @@ No data migration — this is a pure read addition over the existing index; no s
 
 #### Automated
 
-- [ ] 1.1 Solution builds with zero warnings (`dotnet build src/backend/ReceiptWell.sln`)
+- [x] 1.1 Solution builds with zero warnings (`dotnet build src/backend/ReceiptWell.sln`) — d54d321
 
 #### Manual
 
-- [ ] 1.2 New receipt shows `pending` with null/empty metadata via `GET /receipts`
-- [ ] 1.3 Processed receipt shows `ready`/`error` with populated fields
-- [ ] 1.4 Cross-account isolation verified (filter correctness)
-- [ ] 1.5 `GET /receipts` without token returns 401
-- [ ] 1.6 New user with zero receipts gets `200 OK` with an empty array
+- [x] 1.2 New receipt shows `pending` with null/empty metadata via `GET /receipts` — d54d321
+- [x] 1.3 Processed receipt shows `ready`/`error` with populated fields — d54d321
+- [x] 1.4 Cross-account isolation verified (filter correctness) — d54d321
+- [x] 1.5 `GET /receipts` without token returns 401 — d54d321
+- [x] 1.6 New user with zero receipts gets `200 OK` with an empty array — d54d321
 
 ### Phase 2: Frontend — Receipts list page (must-have)
 

@@ -27,3 +27,8 @@ Content-Type: application/json
 }
 
 ###
+
+GET {{receipt_well_HostAddress}}/receipts
+Authorization: Bearer {{token}}
+
+###
