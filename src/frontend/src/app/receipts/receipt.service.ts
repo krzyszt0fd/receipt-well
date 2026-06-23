@@ -3,9 +3,24 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
+export interface ReceiptSummary {
+  id: string;
+  fileName: string;
+  fileSize: number;
+  status: 'pending' | 'ready' | 'error';
+  uploadedAt: string;
+  storeName: string | null;
+  purchaseDate: string | null;
+  tags: string[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class ReceiptService {
   private readonly http = inject(HttpClient);
+
+  getReceipts(): Observable<ReceiptSummary[]> {
+    return this.http.get<ReceiptSummary[]>(`${environment.apiUrl}/receipts`);
+  }
 
   getStagingSlot(): Observable<{ stagingUri: string; stagingBlobName: string }> {
     return this.http.post<{ stagingUri: string; stagingBlobName: string }>(

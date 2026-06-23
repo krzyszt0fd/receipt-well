@@ -293,17 +293,17 @@ No data migration — this is a pure read addition over the existing index; no s
 
 #### Automated
 
-- [ ] 2.1 Frontend builds (`npm --prefix src/frontend run build`)
-- [ ] 2.2 Frontend unit tests pass (`npm --prefix src/frontend test`)
+- [x] 2.1 Frontend builds (`npm --prefix src/frontend run build`)
+- [x] 2.2 Frontend unit tests pass (`npm --prefix src/frontend test`)
 
 #### Manual
 
-- [ ] 2.3 Populated list shows correct chip colors, metadata, and capped tags
-- [ ] 2.4 Empty state shown for zero receipts; button navigates to upload
-- [ ] 2.5 Retriable error card on fetch failure; "Try again" works
-- [ ] 2.6 Nav links work both directions (upload ↔ list)
-- [ ] 2.7 AXE check passes in all four states
-- [ ] 2.8 Mobile viewport remains readable without horizontal scroll
+- [x] 2.3 Populated list shows correct chip colors, metadata, and capped tags
+- [x] 2.4 Empty state shown for zero receipts; button navigates to upload
+- [x] 2.5 Retriable error card on fetch failure; "Try again" works
+- [x] 2.6 Nav links work both directions (upload ↔ list)
+- [x] 2.7 AXE check passes in all four states
+- [x] 2.8 Mobile viewport remains readable without horizontal scroll
 
 ### Phase 3: Frontend — Auto-poll while pending (nice-to-have)
 

@@ -16,6 +16,11 @@ export const routes: Routes = [
         path: 'upload',
         loadComponent: () =>
           import('./receipts/upload/upload.component').then(m => m.UploadComponent)
+      },
+      {
+        path: 'receipts',
+        loadComponent: () =>
+          import('./receipts/list/list.component').then(m => m.ReceiptListComponent)
       }
     ]
   },

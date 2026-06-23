@@ -1,5 +1,17 @@
 @use '../../../styles/colors' as c;
 
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+mat-card-actions {
+  gap: 8px;
+}
+
 .file-zone {
   position: relative;
   margin-top: 16px;
