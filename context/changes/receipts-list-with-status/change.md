@@ -1,9 +1,9 @@
 ---
 change_id: receipts-list-with-status
 title: Receipts list with status
-status: impl_reviewed
+status: implementing
 created: 2026-06-21
-updated: 2026-06-21
+updated: 2026-06-23
 archived_at: null
 ---
 

@@ -293,28 +293,28 @@ No data migration — this is a pure read addition over the existing index; no s
 
 #### Automated
 
-- [x] 2.1 Frontend builds (`npm --prefix src/frontend run build`)
-- [x] 2.2 Frontend unit tests pass (`npm --prefix src/frontend test`)
+- [x] 2.1 Frontend builds (`npm --prefix src/frontend run build`) — 8f8156a
+- [x] 2.2 Frontend unit tests pass (`npm --prefix src/frontend test`) — 8f8156a
 
 #### Manual
 
-- [x] 2.3 Populated list shows correct chip colors, metadata, and capped tags
-- [x] 2.4 Empty state shown for zero receipts; button navigates to upload
-- [x] 2.5 Retriable error card on fetch failure; "Try again" works
-- [x] 2.6 Nav links work both directions (upload ↔ list)
-- [x] 2.7 AXE check passes in all four states
-- [x] 2.8 Mobile viewport remains readable without horizontal scroll
+- [x] 2.3 Populated list shows correct chip colors, metadata, and capped tags — 8f8156a
+- [x] 2.4 Empty state shown for zero receipts; button navigates to upload — 8f8156a
+- [x] 2.5 Retriable error card on fetch failure; "Try again" works — 8f8156a
+- [x] 2.6 Nav links work both directions (upload ↔ list) — 8f8156a
+- [x] 2.7 AXE check passes in all four states — 8f8156a
+- [x] 2.8 Mobile viewport remains readable without horizontal scroll — 8f8156a
 
 ### Phase 3: Frontend — Auto-poll while pending (nice-to-have)
 
 #### Automated
 
-- [ ] 3.1 Frontend builds (`npm --prefix src/frontend run build`)
-- [ ] 3.2 Frontend unit tests pass, including polling start/stop test (`npm --prefix src/frontend test`)
+- [x] 3.1 Frontend builds (`npm --prefix src/frontend run build`)
+- [x] 3.2 Frontend unit tests pass, including polling start/stop test (`npm --prefix src/frontend test`)
 
 #### Manual
 
-- [ ] 3.3 Pending receipt flips status automatically without manual action
-- [ ] 3.4 Polling stops once all rows are settled (verified via Network tab)
-- [ ] 3.5 Manual refresh during active poll does not double-fetch or duplicate timers
-- [ ] 3.6 Navigating away stops the timer cleanly
+- [x] 3.3 Pending receipt flips status automatically without manual action
+- [x] 3.4 Polling stops once all rows are settled (verified via Network tab)
+- [x] 3.5 Manual refresh during active poll does not double-fetch or duplicate timers
+- [x] 3.6 Navigating away stops the timer cleanly
