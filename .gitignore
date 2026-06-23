@@ -14,3 +14,6 @@ src/frontend/src/environments/environment.local.ts
 
 # Claude local settings
 .claude/settings.local.json
+
+# REST Client (.http) local secrets — tenant/client IDs and test credentials, never commit
+.env
