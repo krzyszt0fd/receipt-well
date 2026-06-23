@@ -309,12 +309,12 @@ No data migration — this is a pure read addition over the existing index; no s
 
 #### Automated
 
-- [x] 3.1 Frontend builds (`npm --prefix src/frontend run build`)
-- [x] 3.2 Frontend unit tests pass, including polling start/stop test (`npm --prefix src/frontend test`)
+- [x] 3.1 Frontend builds (`npm --prefix src/frontend run build`) — 13be2ae
+- [x] 3.2 Frontend unit tests pass, including polling start/stop test (`npm --prefix src/frontend test`) — 13be2ae
 
 #### Manual
 
-- [x] 3.3 Pending receipt flips status automatically without manual action
-- [x] 3.4 Polling stops once all rows are settled (verified via Network tab)
-- [x] 3.5 Manual refresh during active poll does not double-fetch or duplicate timers
-- [x] 3.6 Navigating away stops the timer cleanly
+- [x] 3.3 Pending receipt flips status automatically without manual action — 13be2ae
+- [x] 3.4 Polling stops once all rows are settled (verified via Network tab) — 13be2ae
+- [x] 3.5 Manual refresh during active poll does not double-fetch or duplicate timers — 13be2ae
+- [x] 3.6 Navigating away stops the timer cleanly — 13be2ae
