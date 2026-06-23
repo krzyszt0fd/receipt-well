@@ -11,6 +11,7 @@ import { ReceiptService, ReceiptSummary } from '../receipt.service';
 
 const MAX_VISIBLE_TAGS = 5;
 const POLL_INTERVAL_MS = 5000;
+const POLL_STALE_THRESHOLD_MS = 30 * 60 * 1000;
 
 @Component({
   selector: 'app-receipt-list',
@@ -33,7 +34,9 @@ export class ReceiptListComponent implements OnInit, OnDestroy {
   readonly receipts = signal<ReceiptSummary[]>([]);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
-  readonly hasPending = computed(() => this.receipts().some(r => r.status === 'pending'));
+  readonly hasPending = computed(() =>
+    this.receipts().some(r => r.status === 'pending' && !this.isStalePending(r.uploadedAt))
+  );
 
   private pollTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private fetchSubscription: Subscription | null = null;
@@ -93,6 +96,11 @@ export class ReceiptListComponent implements OnInit, OnDestroy {
       clearTimeout(this.pollTimeoutId);
       this.pollTimeoutId = null;
     }
+  }
+
+  /** Receipts uploaded before the processing queue existed never leave `pending` — stop polling for those. */
+  private isStalePending(uploadedAt: string): boolean {
+    return Date.now() - new Date(uploadedAt).getTime() > POLL_STALE_THRESHOLD_MS;
   }
 
   visibleTags(tags: string[]): string[] {

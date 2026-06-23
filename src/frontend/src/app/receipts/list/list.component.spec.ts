@@ -17,7 +17,19 @@ const baseReceipt: ReceiptSummary = {
   tags: ['food', 'groceries']
 };
 
-const pendingReceipt: ReceiptSummary = { ...baseReceipt, id: 'r2', status: 'pending' };
+const pendingReceipt: ReceiptSummary = {
+  ...baseReceipt,
+  id: 'r2',
+  status: 'pending',
+  uploadedAt: new Date().toISOString()
+};
+
+const stalePendingReceipt: ReceiptSummary = {
+  ...baseReceipt,
+  id: 'r3',
+  status: 'pending',
+  uploadedAt: '2020-01-01T00:00:00Z'
+};
 
 function createComponent(getReceipts: () => ReturnType<ReceiptService['getReceipts']>) {
   TestBed.configureTestingModule({
@@ -146,6 +158,13 @@ describe('ReceiptListComponent polling (Phase 3)', () => {
 
     vi.advanceTimersByTime(5000);
     expect(callCount).toBe(4);
+  });
+
+  it('does not poll for a receipt stuck pending from before the queue existed', () => {
+    const component = createComponent(() => of([stalePendingReceipt]));
+
+    expect(component.receipts()).toEqual([stalePendingReceipt]);
+    expect(component.hasPending()).toBe(false);
   });
 
   it('stops the poll timer on destroy', () => {
