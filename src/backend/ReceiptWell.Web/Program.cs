@@ -52,6 +52,7 @@ builder.Services.AddAuthorization(options =>
 {
     options.FallbackPolicy = new AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
+        .RequireClaim("oid")
         .Build();
 });
 var connectionString = builder.Configuration["AzureStorage:ConnectionString"];

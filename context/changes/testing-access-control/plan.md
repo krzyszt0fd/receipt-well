@@ -348,26 +348,26 @@ None. All Phase 1 tests are hermetic and infra-free; the suite is fast by constr
 
 #### Automated
 
-- [x] 1.1 Lock file refreshed: `dotnet restore src/backend/ReceiptWell.sln`
-- [x] 1.2 Solution builds with zero warnings: `dotnet build src/backend/ReceiptWell.sln`
-- [x] 1.3 Test project discovered and smoke test passes: `dotnet test src/backend/ReceiptWell.sln`
+- [x] 1.1 Lock file refreshed: `dotnet restore src/backend/ReceiptWell.sln` — ffd8ed6
+- [x] 1.2 Solution builds with zero warnings: `dotnet build src/backend/ReceiptWell.sln` — ffd8ed6
+- [x] 1.3 Test project discovered and smoke test passes: `dotnet test src/backend/ReceiptWell.sln` — ffd8ed6
 
 #### Manual
 
-- [x] 1.4 Factory boots offline with no Azure network call
-- [x] 1.5 Test package versions live only in `Directory.Packages.props`; `.csproj` carries no `Version`
+- [x] 1.4 Factory boots offline with no Azure network call — ffd8ed6
+- [x] 1.5 Test package versions live only in `Directory.Packages.props`; `.csproj` carries no `Version` — ffd8ed6
 
 ### Phase 2: Risk #2 — Auth Gate + Missing-`oid` Fix
 
 #### Automated
 
-- [ ] 2.1 Build zero warnings: `dotnet build src/backend/ReceiptWell.sln`
-- [ ] 2.2 Gate tests pass: `dotnet test src/backend/ReceiptWell.sln`
+- [x] 2.1 Build zero warnings: `dotnet build src/backend/ReceiptWell.sln`
+- [x] 2.2 Gate tests pass: `dotnet test src/backend/ReceiptWell.sln`
 
 #### Manual
 
-- [ ] 2.3 Removing `.RequireClaim("oid")` makes a no-`oid` test fail (guards the fix)
-- [ ] 2.4 `test-plan.md` §Risk Response #2 wording matches the 401/403 split
+- [x] 2.3 Removing `.RequireClaim("oid")` makes a no-`oid` test fail (guards the fix)
+- [x] 2.4 `test-plan.md` §Risk Response #2 wording matches the 401/403 split
 
 ### Phase 3: Risk #1 — Ownership Scoping
 
