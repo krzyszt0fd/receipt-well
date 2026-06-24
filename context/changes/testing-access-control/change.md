@@ -1,7 +1,7 @@
 ---
 change_id: testing-access-control
 title: Testing access control
-status: implementing
+status: implemented
 created: 2026-06-24
 updated: 2026-06-24
 archived_at: null

@@ -385,10 +385,10 @@ None. All Phase 1 tests are hermetic and infra-free; the suite is fast by constr
 
 #### Automated
 
-- [x] 4.1 Full suite green: `dotnet test src/backend/ReceiptWell.sln`
-- [x] 4.2 Build zero warnings: `dotnet build src/backend/ReceiptWell.sln`
+- [x] 4.1 Full suite green: `dotnet test src/backend/ReceiptWell.sln` — 6475e4f
+- [x] 4.2 Build zero warnings: `dotnet build src/backend/ReceiptWell.sln` — 6475e4f
 
 #### Manual
 
-- [x] 4.3 §6.1/§6.2 cookbook entries are concrete (no "TBD")
-- [x] 4.4 Backend CLAUDE.md "Testing" section lets a fresh agent run/extend the suite
+- [x] 4.3 §6.1/§6.2 cookbook entries are concrete (no "TBD") — 6475e4f
+- [x] 4.4 Backend CLAUDE.md "Testing" section lets a fresh agent run/extend the suite — 6475e4f
