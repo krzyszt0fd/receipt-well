@@ -216,3 +216,7 @@ app.MapGet("/receipts", async (
 app.Run();
 
 record ConfirmRequest(string StagingBlobName, string OriginalFileName);
+
+// Exposes the implicitly-internal top-level Program type to the test project so
+// WebApplicationFactory<Program> can boot the real app for integration tests.
+public partial class Program { }
