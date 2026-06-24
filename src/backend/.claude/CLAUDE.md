@@ -44,6 +44,18 @@ This project uses NuGet lock files with content hashes. After adding or updating
 - App startup failure → Fatal/Critical.
 - You must not log web requests or responses as this will be covered in a dedicated middleware.
 
+## Testing
+
+Run: `dotnet test src/backend/ReceiptWell.sln`.
+
+**Boot requirement.** `ReceiptWellWebFactory` (`ReceiptWell.Tests/Infrastructure/`) boots the real app offline. Three config keys are read eagerly at startup *outside* any DI lambda — the factory supplies in-memory dummies for them; if you add another eager read, update the factory or the host won't start under test. The `SearchIndexInitializer` hosted service is removed for the same reason.
+
+**Identity injection.** `TestAuthHandler` is the default auth scheme. It reads request headers: `X-Test-Oid: <oid>` → authenticated with that `oid`; `X-Test-No-Oid` → authenticated without `oid`; no header → 401 challenge. Only authentication is faked — the real policy decides 401 vs 403.
+
+**Azure client substitutes** (`BlobServiceClient`, `SearchClient`, `SearchIndexClient`, `QueueClient`) are NSubstitute instances exposed on the factory. Use `DidNotReceiveWithAnyArgs()` to assert a rejected path performed no side effects.
+
+**Filter assertions must be requirement-derived**, not an exact copy of the implementation string. Assert the filter contains the scoping field name and the caller's id — never `Assert.Equal($"UserId eq '{userId}'", filter)`.
+
 ## Maintain example endpoints collection
 
 After modification to an existing endpoint contract or new one added or deleted, update example http request collection in `@../../receipt-well.http`.

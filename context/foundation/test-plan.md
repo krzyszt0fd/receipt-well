@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-06-23 (Phase 1 change opened)
+> Last updated: 2026-06-24 (Phase 1 complete — backend harness + access control)
 
 ## 1. Strategy
 
@@ -82,7 +82,7 @@ orchestrator updates Status as artifacts appear on disk.
 
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|------------|-----------------|---------------|------------|--------|---------------|
-| 1 | Backend test harness + access control | Bootstrap the backend test project (none today) and prove ownership scoping and the auth gate hold | #1, #2 | unit + integration | change opened | context/changes/testing-access-control/ |
+| 1 | Backend test harness + access control | Bootstrap the backend test project (none today) and prove ownership scoping and the auth gate hold | #1, #2 | unit + integration | complete | context/changes/testing-access-control/ |
 | 2 | Infra-boundary failure shape | A failing Blob/Queue/Search/Function dependency surfaces a clean, honest 5xx — never a silent success | #7 | integration | not started | — |
 | 3 | Upload integrity + input validation | Photo survives an extraction failure; the server enforces size/type itself | #4, #3 | integration + unit | not started | — |
 | 4 | Async extraction + business rules | Failed extraction reaches a visible terminal status (not stuck) and the poison path; tags normalize to PL | #5, #6 | unit + integration | not started | — |
@@ -143,11 +143,19 @@ relevant rollout phase ships; before that, it reads "TBD — see §3 Phase N."
 
 ### 6.1 Adding a backend unit test
 
-- TBD — see §3 Phase 1 (claim→scope mapping; status-transition logic; tag normalization to PL with a requirements-derived oracle).
+Backend unit tests live in `src/backend/ReceiptWell.Tests/` (xUnit; `Xunit` + `NSubstitute` come from `GlobalUsings.cs`). Use a pure unit (no `WebApplicationFactory`) whenever the behaviour is a function of inputs you can construct directly.
+
+- **Claim→scope mapping** (`ClaimsPrincipalExtensionsTests.cs`): construct a `ClaimsPrincipal` carrying the short `oid` claim and assert `GetUserId()` returns it; construct one without `oid` and assert it throws `InvalidOperationException`. This pins the `MapInboundClaims = false` contract (see lessons.md) — the short claim name must resolve. No factory, no HTTP.
+- **Filter-capture with a requirement-derived oracle** (`ReceiptQueryScopingTests.cs`): substitute the Azure client (`Substitute.For<SearchClient>()`), capture the argument with `Arg.Do<SearchOptions>(o => captured = o)`, and return an empty result built via `SearchModelFactory.SearchResults(...)` wrapped in `Response.FromValue(results, rawResponse)`. **Assert the requirement, not the implementation string**: `Assert.Contains("UserId", filter)` + `Assert.Contains(callerId, filter)` — never `Assert.Equal($"UserId eq '{userId}'", filter)`, which would mirror the code and pass against a bug.
 
 ### 6.2 Adding a backend integration test (API endpoint)
 
-- TBD — see §3 Phase 1 (two-identity ownership test) and §3 Phase 2 (failing-dependency / honest-5xx test).
+API integration tests boot the real app offline through `ReceiptWellWebFactory` (`Infrastructure/ReceiptWellWebFactory.cs`), a `WebApplicationFactory<Program>`. Inject the test fixture via `IClassFixture<ReceiptWellWebFactory>` and `factory.CreateClient()`. The factory: runs in the `Development` environment, supplies dummy values for the eager startup config reads, removes the `SearchIndexInitializer` hosted service, and replaces every Azure client (`BlobServiceClient`, `SearchClient`, `SearchIndexClient`, `QueueClient`) with NSubstitute substitutes it exposes as public properties so tests can assert interactions. **No network call is possible.**
+
+- **Identity injection** (`TestAuthHandler`): the `"Test"` scheme is the default, and it reads request headers — `X-Test-Oid: <oid>` authenticates with that `oid`; `X-Test-No-Oid` authenticates a principal *without* an `oid` claim; no header models "no token". Only authentication is simulated — the **real** authorization policy (`RequireAuthenticatedUser` + `RequireClaim("oid")`) decides the outcome, so the 401/403 split comes from production code.
+- **Auth-gate pattern** (`AuthGateTests.cs`): a `[Theory]` over the protected routes (`TheoryData<string,string>` of method+path) asserts no header → **401** and `X-Test-No-Oid` → **403** on each route, plus one positive control (`X-Test-Oid` set → response is *not* 401/403) so the gate assertions are not vacuously true.
+- **Two-identity ownership pattern** (`ReceiptConfirmOwnershipTests.cs`): use two distinct `oid` values (a single-user fixture hides the leak). Confirm a blob staged under another user's prefix (`X-Test-Oid: user-a`, `stagingBlobName = "user-b/<guid>"`) → **403**, then assert the rejected path did **no** cross-user work via `DidNotReceiveWithAnyArgs()` on the substituted clients (`GetBlobContainerClient`, `MergeOrUploadDocumentsAsync`, `SendMessageAsync`). Include the sibling-prefix edge (`abc` vs `abcd/…`) to prove the trailing `/` in the `Ordinal` guard is load-bearing.
+- Failing-dependency / honest-5xx tests land in §3 Phase 2.
 
 ### 6.3 Adding an Azure Functions test
 
@@ -166,6 +174,12 @@ relevant rollout phase ships; before that, it reads "TBD — see §3 Phase N."
 
 (Optional. After each phase lands, `/10x-implement` appends a 2–3 line note
 here capturing anything surprising the rollout phase taught.)
+
+**Phase 1 — Backend harness + access control (2026-06-24):**
+- **Eager config reads gate startup.** `Program.cs` reads `AzureSearch:ServiceUri`, `AzureSearch:ApiKey`, and `AzureStorage:ExtractionQueueName` with `!` *outside* any DI lambda. The test factory must supply in-memory dummy values for all three or `WebApplicationFactory` boot throws before any test runs.
+- **Remove the startup hosted service.** `AddHostedService<SearchIndexInitializer>()` resolves the Search clients on host start and would call Azure; `ConfigureTestServices` removes that single `IHostedService` descriptor so the host boots offline.
+- **`SearchModelFactory` is version-sensitive.** `SearchResults<T>` has no public constructor — build the filter-capture stub's return with `SearchModelFactory.SearchResults(values, totalCount, facets, coverage, rawResponse)` + `Response.FromValue(...)`. The exact overload/argument list shifts between `Azure.Search.Documents` versions; confirm against `Directory.Packages.props` when it changes.
+- **Behaviour fix shipped with the tests.** `GetUserId()` runs outside each handler's `try`, so a valid-but-`oid`-less token used to throw → **500**. Phase 2 added `.RequireClaim("oid")` to the global `FallbackPolicy`, so the claimless principal is now rejected with **403 in middleware** before any handler runs.
 
 ## 7. What We Deliberately Don't Test
 

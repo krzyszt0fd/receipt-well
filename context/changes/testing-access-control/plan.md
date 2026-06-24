@@ -373,22 +373,22 @@ None. All Phase 1 tests are hermetic and infra-free; the suite is fast by constr
 
 #### Automated
 
-- [x] 3.1 Build zero warnings: `dotnet build src/backend/ReceiptWell.sln`
-- [x] 3.2 All ownership tests pass: `dotnet test src/backend/ReceiptWell.sln`
+- [x] 3.1 Build zero warnings: `dotnet build src/backend/ReceiptWell.sln` — 7a86a02
+- [x] 3.2 All ownership tests pass: `dotnet test src/backend/ReceiptWell.sln` — 7a86a02
 
 #### Manual
 
-- [x] 3.3 Filter assertion is requirement-derived, not a mirror of `$"UserId eq '{userId}'"`
-- [x] 3.4 Confirm test uses two `oid` values and asserts the no-side-effect negative
+- [x] 3.3 Filter assertion is requirement-derived, not a mirror of `$"UserId eq '{userId}'"` — 7a86a02
+- [x] 3.4 Confirm test uses two `oid` values and asserts the no-side-effect negative — 7a86a02
 
 ### Phase 4: Cookbook, Docs, and Sync
 
 #### Automated
 
-- [ ] 4.1 Full suite green: `dotnet test src/backend/ReceiptWell.sln`
-- [ ] 4.2 Build zero warnings: `dotnet build src/backend/ReceiptWell.sln`
+- [x] 4.1 Full suite green: `dotnet test src/backend/ReceiptWell.sln`
+- [x] 4.2 Build zero warnings: `dotnet build src/backend/ReceiptWell.sln`
 
 #### Manual
 
-- [ ] 4.3 §6.1/§6.2 cookbook entries are concrete (no "TBD")
-- [ ] 4.4 Backend CLAUDE.md "Testing" section lets a fresh agent run/extend the suite
+- [x] 4.3 §6.1/§6.2 cookbook entries are concrete (no "TBD")
+- [x] 4.4 Backend CLAUDE.md "Testing" section lets a fresh agent run/extend the suite
