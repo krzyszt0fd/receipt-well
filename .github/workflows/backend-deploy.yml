@@ -26,10 +26,6 @@ jobs:
         run: dotnet restore src/backend/ReceiptWell.sln
 
       - name: Test
-        env:
-          AzureSearch__ServiceUri: https://search.localhost.test/
-          AzureSearch__ApiKey: test-api-key
-          AzureStorage__ExtractionQueueName: test-extraction-queue
         run: dotnet test src/backend/ReceiptWell.sln --no-restore --verbosity minimal
 
       - name: Build & Publish

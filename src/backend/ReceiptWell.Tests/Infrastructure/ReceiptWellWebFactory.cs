@@ -22,6 +22,16 @@ namespace ReceiptWell.Tests.Infrastructure;
 /// </summary>
 public class ReceiptWellWebFactory : WebApplicationFactory<Program>
 {
+    static ReceiptWellWebFactory()
+    {
+        // Program.cs reads these three keys eagerly from builder.Configuration (lines 89-90, 65)
+        // before WebApplicationFactory.ConfigureAppConfiguration fires. Setting them as env vars
+        // makes them available from process start regardless of user secrets or CI environment.
+        Environment.SetEnvironmentVariable("AzureSearch__ServiceUri", "https://search.localhost.test/");
+        Environment.SetEnvironmentVariable("AzureSearch__ApiKey", "test-api-key");
+        Environment.SetEnvironmentVariable("AzureStorage__ExtractionQueueName", "test-extraction-queue");
+    }
+
     public BlobServiceClient BlobServiceClient { get; } = Substitute.For<BlobServiceClient>();
     public SearchClient SearchClient { get; } = Substitute.For<SearchClient>();
     public SearchIndexClient SearchIndexClient { get; } = Substitute.For<SearchIndexClient>();
@@ -35,11 +45,8 @@ public class ReceiptWellWebFactory : WebApplicationFactory<Program>
 
         builder.ConfigureAppConfiguration((_, config) =>
         {
-            // These three keys are read eagerly at startup via builder.Configuration (Program.cs:89-90,65),
-            // BEFORE WebApplicationFactory's ConfigureAppConfiguration fires. Locally, user secrets satisfy
-            // them; in CI the workflow Test step sets the matching env vars (AzureSearch__ServiceUri etc.)
-            // so the process sees them from start. This AddInMemoryCollection handles any remaining gaps
-            // (e.g. local runs without secrets and without the env vars set).
+            // These three keys are read eagerly at startup, OUTSIDE any DI lambda
+            // (Program.cs) — without dummy values the host throws before any test runs.
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["AzureSearch:ServiceUri"] = "https://search.localhost.test/",
