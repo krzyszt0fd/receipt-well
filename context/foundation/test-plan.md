@@ -127,7 +127,7 @@ phase lands; before that, the gate is `planned`.
 | Gate | Where | Required? | Catches |
 |------|-------|-----------|---------|
 | lint + typecheck (frontend) + build (backend) | local + CI (GitHub Actions) | required | syntactic / type drift |
-| backend unit + integration | local + CI | required after §3 Phase 1 | access-control & logic regressions |
+| backend unit + integration | local + CI (backend-deploy.yml) | required | access-control & logic regressions |
 | frontend unit (Vitest) | local + CI | required after §3 Phase 5 | component/UI logic regressions |
 | infra-boundary failure tests | CI | required after §3 Phase 2 | opaque 500 / silent success at infra edges |
 | post-edit hook (run affected tests) | local (agent loop) | recommended | regressions at edit time |
