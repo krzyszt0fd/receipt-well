@@ -35,8 +35,11 @@ public class ReceiptWellWebFactory : WebApplicationFactory<Program>
 
         builder.ConfigureAppConfiguration((_, config) =>
         {
-            // These three keys are read eagerly at startup, OUTSIDE any DI lambda
-            // (Program.cs) — without dummy values the host throws before any test runs.
+            // These three keys are read eagerly at startup via builder.Configuration (Program.cs:89-90,65),
+            // BEFORE WebApplicationFactory's ConfigureAppConfiguration fires. Locally, user secrets satisfy
+            // them; in CI the workflow Test step sets the matching env vars (AzureSearch__ServiceUri etc.)
+            // so the process sees them from start. This AddInMemoryCollection handles any remaining gaps
+            // (e.g. local runs without secrets and without the env vars set).
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["AzureSearch:ServiceUri"] = "https://search.localhost.test/",
