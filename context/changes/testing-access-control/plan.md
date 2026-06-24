@@ -361,25 +361,25 @@ None. All Phase 1 tests are hermetic and infra-free; the suite is fast by constr
 
 #### Automated
 
-- [x] 2.1 Build zero warnings: `dotnet build src/backend/ReceiptWell.sln`
-- [x] 2.2 Gate tests pass: `dotnet test src/backend/ReceiptWell.sln`
+- [x] 2.1 Build zero warnings: `dotnet build src/backend/ReceiptWell.sln` — b3d2ac1
+- [x] 2.2 Gate tests pass: `dotnet test src/backend/ReceiptWell.sln` — b3d2ac1
 
 #### Manual
 
-- [x] 2.3 Removing `.RequireClaim("oid")` makes a no-`oid` test fail (guards the fix)
-- [x] 2.4 `test-plan.md` §Risk Response #2 wording matches the 401/403 split
+- [x] 2.3 Removing `.RequireClaim("oid")` makes a no-`oid` test fail (guards the fix) — b3d2ac1
+- [x] 2.4 `test-plan.md` §Risk Response #2 wording matches the 401/403 split — b3d2ac1
 
 ### Phase 3: Risk #1 — Ownership Scoping
 
 #### Automated
 
-- [ ] 3.1 Build zero warnings: `dotnet build src/backend/ReceiptWell.sln`
-- [ ] 3.2 All ownership tests pass: `dotnet test src/backend/ReceiptWell.sln`
+- [x] 3.1 Build zero warnings: `dotnet build src/backend/ReceiptWell.sln`
+- [x] 3.2 All ownership tests pass: `dotnet test src/backend/ReceiptWell.sln`
 
 #### Manual
 
-- [ ] 3.3 Filter assertion is requirement-derived, not a mirror of `$"UserId eq '{userId}'"`
-- [ ] 3.4 Confirm test uses two `oid` values and asserts the no-side-effect negative
+- [x] 3.3 Filter assertion is requirement-derived, not a mirror of `$"UserId eq '{userId}'"`
+- [x] 3.4 Confirm test uses two `oid` values and asserts the no-side-effect negative
 
 ### Phase 4: Cookbook, Docs, and Sync
 
