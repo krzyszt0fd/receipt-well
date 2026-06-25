@@ -41,3 +41,10 @@ GET {{hostAddress}}/receipts
 Authorization: Bearer {{token}}
 
 ###
+
+# Tag search: Polish-stemmed full-text over tags (e.g. "rowery" matches a "rower" tag).
+# Blank/missing q lists all; only the caller's receipts are ever returned.
+GET {{hostAddress}}/receipts?q=rower
+Authorization: Bearer {{token}}
+
+###

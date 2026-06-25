@@ -198,13 +198,15 @@ app.MapGet("/receipts", async (
     HttpContext httpContext,
     ReceiptQueryService queryService,
     ILoggerFactory loggerFactory,
+    string? q,
     CancellationToken cancellationToken) =>
 {
     var endpointLogger = loggerFactory.CreateLogger("receipts-list");
     var userId = httpContext.User.GetUserId();
     try
     {
-        var summaries = await queryService.GetReceiptsAsync(userId, cancellationToken);
+        // Blank/missing q means browse-all, not a validation error (400 is non-retriable).
+        var summaries = await queryService.GetReceiptsAsync(userId, q, cancellationToken);
         return Results.Ok(summaries);
     }
     catch (Exception ex)
