@@ -58,3 +58,19 @@ ng build
 ```
 
 Artifacts are written to `dist/`. The production configuration substitutes `__PLACEHOLDER__` values in `environment.prod.ts` via GitHub Actions variables before the build runs.
+
+## Linting
+
+ESLint is configured via `eslint.config.js` (flat config) using:
+
+- **`eslint.configs.recommended`** — core JS rules
+- **`typescript-eslint`** — TypeScript-aware rules (strict + stylistic)
+- **`angular-eslint`** — Angular-specific rules for `.ts` files and HTML templates
+- **`angular.configs.templateAccessibility`** — WCAG/ARIA checks on templates
+
+```bash
+npm run lint          # check for issues
+npx ng lint --fix     # auto-fix where possible
+```
+
+A `PostToolUse` hook in `.claude/settings.json` also runs ESLint and `tsc --noEmit` automatically on every frontend `.ts` or `.html` edit, feeding errors back into the agent so they are corrected inline.
