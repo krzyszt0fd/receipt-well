@@ -1,9 +1,9 @@
 ---
 change_id: tag-search
 title: Tag search
-status: implementing
+status: implemented
 created: 2026-06-24
-updated: 2026-06-25
+updated: 2026-06-27
 archived_at: null
 ---
 

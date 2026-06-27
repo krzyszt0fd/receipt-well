@@ -267,13 +267,13 @@ Query volume is low (PRD `target_scale.qps: low`). Debouncing input at ~300ms ke
 
 #### Automated
 
-- [x] 2.1 Frontend builds: `npm --prefix src/frontend run build`
-- [x] 2.2 Lint passes: `npm --prefix src/frontend run lint`
-- [x] 2.3 Component specs pass: `npm --prefix src/frontend test`
+- [x] 2.1 Frontend builds: `npm --prefix src/frontend run build` — 784b159
+- [x] 2.2 Lint passes: `npm --prefix src/frontend run lint` — 784b159
+- [x] 2.3 Component specs pass: `npm --prefix src/frontend test` — 784b159
 
 #### Manual
 
-- [ ] 2.4 Typing a tag filters the list after a brief pause; clearing the box restores the full list
-- [ ] 2.5 A non-matching term shows the no-match panel with a working clear action (distinct from "No receipts yet")
-- [ ] 2.6 While a receipt is `pending`, the 5s poll does not wipe out an active search
-- [ ] 2.7 Search field is keyboard-accessible and passes AXE (label, focus, contrast)
+- [x] 2.4 Typing a tag filters the list after a brief pause; clearing the box restores the full list — 784b159
+- [x] 2.5 A non-matching term shows the no-match panel with a working clear action (distinct from "No receipts yet") — 784b159
+- [x] 2.6 While a receipt is `pending`, the 5s poll does not wipe out an active search — 784b159
+- [x] 2.7 Search field is keyboard-accessible and passes AXE (label, focus, contrast) — 784b159
