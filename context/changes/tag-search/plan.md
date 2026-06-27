@@ -250,9 +250,9 @@ Query volume is low (PRD `target_scale.qps: low`). Debouncing input at ~300ms ke
 
 #### Automated
 
-- [x] 1.1 Solution builds with zero warnings: `dotnet build src/backend/ReceiptWell.sln`
-- [x] 1.2 All backend tests pass: `dotnet test src/backend/ReceiptWell.sln`
-- [x] 1.3 New search tests assert user-scoping holds on the search path and the term is applied to `TagsPl`
+- [x] 1.1 Solution builds with zero warnings: `dotnet build src/backend/ReceiptWell.sln` — 14634f9
+- [x] 1.2 All backend tests pass: `dotnet test src/backend/ReceiptWell.sln` — 14634f9
+- [x] 1.3 New search tests assert user-scoping holds on the search path and the term is applied to `TagsPl` — 14634f9
 
 #### Manual
 
@@ -267,9 +267,9 @@ Query volume is low (PRD `target_scale.qps: low`). Debouncing input at ~300ms ke
 
 #### Automated
 
-- [ ] 2.1 Frontend builds: `npm --prefix src/frontend run build`
-- [ ] 2.2 Lint passes: `npm --prefix src/frontend run lint`
-- [ ] 2.3 Component specs pass: `npm --prefix src/frontend test`
+- [x] 2.1 Frontend builds: `npm --prefix src/frontend run build`
+- [x] 2.2 Lint passes: `npm --prefix src/frontend run lint`
+- [x] 2.3 Component specs pass: `npm --prefix src/frontend test`
 
 #### Manual
 

@@ -22,20 +22,6 @@
         </button>
       </mat-card-actions>
     </mat-card>
-  } @else if (receipts().length === 0) {
-    <mat-card class="page-card">
-      <mat-card-content>
-        <div class="empty-panel">
-          <mat-icon class="empty-icon" aria-hidden="true">receipt_long</mat-icon>
-          <p>No receipts yet</p>
-        </div>
-      </mat-card-content>
-      <mat-card-actions align="end">
-        <button mat-raised-button color="primary" type="button" routerLink="/home/upload">
-          Upload your first receipt
-        </button>
-      </mat-card-actions>
-    </mat-card>
   } @else {
     <mat-card class="page-card">
       <mat-card-header class="page-header">
@@ -51,43 +37,69 @@
       </mat-card-header>
 
       <mat-card-content>
-        @for (receipt of receipts(); track receipt.id) {
-          <div class="receipt-row">
-            <div class="receipt-row__primary">
-              <mat-chip
-                class="status-chip"
-                [class.status-chip--pending]="receipt.status === 'pending'"
-                [class.status-chip--ready]="receipt.status === 'ready'"
-                [class.status-chip--error]="receipt.status === 'error'"
-              >
-                {{ receipt.status }}
-              </mat-chip>
-              <span class="receipt-row__filename">{{ receipt.fileName }}</span>
-              <span class="receipt-row__date">{{ receipt.uploadedAt | date: 'short' }}</span>
-            </div>
+        <mat-form-field class="search-field" appearance="outline" subscriptSizing="dynamic">
+          <mat-label>Search by tag</mat-label>
+          <input matInput type="search" [formControl]="searchControl" aria-label="Search receipts by tag" />
+          @if (hasActiveSearch()) {
+            <button matSuffix mat-icon-button aria-label="Clear search" type="button" (click)="clearSearch()">
+              <mat-icon aria-hidden="true">close</mat-icon>
+            </button>
+          }
+        </mat-form-field>
 
-            @if (receipt.storeName || receipt.purchaseDate) {
-              <div class="receipt-row__metadata">
-                @if (receipt.storeName) {
-                  <span>{{ receipt.storeName }}</span>
-                }
-                @if (receipt.purchaseDate) {
-                  <span>{{ receipt.purchaseDate | date: 'mediumDate' }}</span>
-                }
-              </div>
-            }
-
-            @if (receipt.tags.length > 0) {
-              <div class="receipt-row__tags">
-                @for (tag of visibleTags(receipt.tags); track tag) {
-                  <mat-chip class="tag-chip">{{ tag }}</mat-chip>
-                }
-                @if (extraTagCount(receipt.tags) > 0) {
-                  <span class="receipt-row__more-tags">+{{ extraTagCount(receipt.tags) }} more</span>
-                }
-              </div>
-            }
+        @if (noSearchResults()) {
+          <div class="no-match-panel">
+            <mat-icon class="empty-icon" aria-hidden="true">search_off</mat-icon>
+            <p>No receipts match "{{ query() }}"</p>
+            <button mat-stroked-button type="button" (click)="clearSearch()">Clear search</button>
           </div>
+        } @else if (receipts().length === 0) {
+          <div class="empty-panel">
+            <mat-icon class="empty-icon" aria-hidden="true">receipt_long</mat-icon>
+            <p>No receipts yet</p>
+            <button mat-raised-button color="primary" type="button" routerLink="/home/upload">
+              Upload your first receipt
+            </button>
+          </div>
+        } @else {
+          @for (receipt of receipts(); track receipt.id) {
+            <div class="receipt-row">
+              <div class="receipt-row__primary">
+                <mat-chip
+                  class="status-chip"
+                  [class.status-chip--pending]="receipt.status === 'pending'"
+                  [class.status-chip--ready]="receipt.status === 'ready'"
+                  [class.status-chip--error]="receipt.status === 'error'"
+                >
+                  {{ receipt.status }}
+                </mat-chip>
+                <span class="receipt-row__filename">{{ receipt.fileName }}</span>
+                <span class="receipt-row__date">{{ receipt.uploadedAt | date: 'short' }}</span>
+              </div>
+
+              @if (receipt.storeName || receipt.purchaseDate) {
+                <div class="receipt-row__metadata">
+                  @if (receipt.storeName) {
+                    <span>{{ receipt.storeName }}</span>
+                  }
+                  @if (receipt.purchaseDate) {
+                    <span>{{ receipt.purchaseDate | date: 'mediumDate' }}</span>
+                  }
+                </div>
+              }
+
+              @if (receipt.tags.length > 0) {
+                <div class="receipt-row__tags">
+                  @for (tag of visibleTags(receipt.tags); track tag) {
+                    <mat-chip class="tag-chip">{{ tag }}</mat-chip>
+                  }
+                  @if (extraTagCount(receipt.tags) > 0) {
+                    <span class="receipt-row__more-tags">+{{ extraTagCount(receipt.tags) }} more</span>
+                  }
+                </div>
+              }
+            </div>
+          }
         }
       </mat-card-content>
     </mat-card>

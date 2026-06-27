@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
@@ -18,8 +18,9 @@ export interface ReceiptSummary {
 export class ReceiptService {
   private readonly http = inject(HttpClient);
 
-  getReceipts(): Observable<ReceiptSummary[]> {
-    return this.http.get<ReceiptSummary[]>(`${environment.apiUrl}/receipts`);
+  getReceipts(query?: string): Observable<ReceiptSummary[]> {
+    const params = query ? new HttpParams().set('q', query) : undefined;
+    return this.http.get<ReceiptSummary[]>(`${environment.apiUrl}/receipts`, { params });
   }
 
   getStagingSlot(): Observable<{ stagingUri: string; stagingBlobName: string }> {
