@@ -85,7 +85,7 @@ orchestrator updates Status as artifacts appear on disk.
 | 1 | Backend test harness + access control | Bootstrap the backend test project (none today) and prove ownership scoping and the auth gate hold | #1, #2 | unit + integration | complete | context/changes/testing-access-control/ |
 | 2 | Infra-boundary failure shape | A failing Blob/Queue/Search/Function dependency surfaces a clean, honest 5xx — never a silent success | #7 | integration | complete | context/changes/testing-infra-boundary-failure/ |
 | 3 | Upload integrity + input validation | Photo survives an extraction failure; the server enforces size/type itself | #4, #3 | integration + unit | not started | — |
-| 4 | Async extraction + business rules | Failed extraction reaches a visible terminal status (not stuck) and the poison path; tags normalize to PL | #5, #6 | unit + integration | not started | — |
+| 4 | Async extraction + business rules | Failed extraction reaches a visible terminal status (not stuck) and the poison path (#5); `TagNormalizer` produces PL tags with requirement-derived oracle (#6 normalization). Note: Risk #6 search-retrieval (correct field, scoping, HTTP contract) already covered by `ReceiptSearchTests` + `ReceiptSearchEndpointTests` (tag-search TDD, PR #7). | #5, #6 | unit + integration | not started | — |
 | 5 | Frontend integration + quality-gates wiring | Cover status rendering, guarded routes, and upload-validation UX where they add signal; wire CI gates | #1–#6 surface checks | Angular unit/integration + gates | not started | — |
 
 **Status vocabulary** (fixed — parser literals): `not started` → `change opened`
@@ -130,7 +130,10 @@ phase lands; before that, the gate is `planned`.
 | backend unit + integration | local + CI (backend-deploy.yml) | required | access-control & logic regressions |
 | frontend unit (Vitest) | local + CI | required after §3 Phase 5 | component/UI logic regressions |
 | infra-boundary failure tests | CI | required after §3 Phase 2 | opaque 500 / silent success at infra edges |
-| post-edit hook (run affected tests) | local (agent loop) | recommended | regressions at edit time |
+| per-edit C# build check (`check_cs_build.py`) | local (agent loop, `.cs` edits) | required | compilation errors at edit time |
+| per-edit frontend lint + typecheck (`check_frontend_lint.py`) | local (agent loop, `.ts`/`.html` in frontend) | required | ESLint violations, TypeScript type errors at edit time |
+| per-edit csproj restore check (`check_csproj_restore.py`) | local (agent loop, `.csproj` edits) | required | restore failures at edit time |
+| pre-commit backend test suite (lefthook) | local (git pre-commit) | required | backend regressions before commit (known gap: no glob filter, runs on all commits regardless of which files changed; frontend has no commit gate — deferred to Phase 5) |
 | e2e on critical flows | CI on PR | optional — not scheduled | broken critical user paths (revisit when search UI ships) |
 
 Existing CI lives in GitHub Actions (backend → Azure App Service, frontend →
@@ -194,6 +197,11 @@ here capturing anything surprising the rollout phase taught.)
 - **Container names are config-coupled.** `ReceiptConfirmService` reads `AzureStorage:StagingContainerName` and `AzureStorage:ReceiptsContainerName` from `IConfiguration`; the harness resolves the same keys from `factory.Services` so tests never drift from the app's own config view.
 - **Model factories are version-sensitive across all Azure SDKs.** `BlobCopyInfo`, `BlobDownloadResult`, `BlobProperties`, and `SendReceipt` (Queues) have no public constructors — always use `BlobsModelFactory` / `QueuesModelFactory`. Argument lists shift between package versions; confirm against `Directory.Packages.props` when compilation fails.
 
+**Tag-search + hooks (out-of-band, 2026-06-27):**
+- **Wildcard queries bypass the field's language analyzer.** `QueryType.Full` + `*` wildcard disables `pl.microsoft` at query time (discovered mid-tag-search TDD, committed to `lessons.md`). Future tests for search fields should assert the absence of wildcards and `QueryType.Full` when a language-analyzer field is involved.
+- **Per-edit hooks run build/lint, not tests.** `dotnet test` is too slow for the agent loop — tests moved to commit (lefthook pre-commit, full backend suite). Three per-edit hooks cover: C# build (`check_cs_build.py`), frontend lint+tsc (`check_frontend_lint.py`), csproj restore (`check_csproj_restore.py`).
+- **Risk #6 split.** Tag-search TDD covered the search-retrieval half of Risk #6 (`ReceiptSearchTests`, `ReceiptSearchEndpointTests`, 5 frontend specs — correct field, scoping, HTTP contract). The normalization half (`TagNormalizer` unit test with requirement-derived oracle — "bike"/"bicycle" → "rower") has zero automated coverage and remains a Phase 4 obligation.
+
 ## 7. What We Deliberately Don't Test
 
 Exclusions agreed during the rollout (Phase 2 interview, Q5). Future
@@ -207,7 +215,7 @@ contributors should respect these unless the underlying assumption changes.
 
 ## 8. Freshness Ledger
 
-- Strategy (§1–§5) last reviewed: 2026-06-23
+- Strategy (§1–§5) last reviewed: 2026-06-27
 - Stack versions last verified: 2026-06-23
 - AI-native tool references last verified: 2026-06-23
 
