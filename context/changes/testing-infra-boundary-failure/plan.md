@@ -278,10 +278,10 @@ None — additive, test-only.
 
 #### Automated
 
-- [x] 3.1 §3 Phase 2 status reads `complete`
-- [x] 3.2 §6.2 honest-5xx placeholder replaced
+- [x] 3.1 §3 Phase 2 status reads `complete` — 6d71960
+- [x] 3.2 §6.2 honest-5xx placeholder replaced — 6d71960
 
 #### Manual
 
-- [x] 3.3 Cookbook recipe is followable by someone not in this session
-- [x] 3.4 (Optional) Selective Stryker run on ReceiptConfirmService surfaces no high-value survived mutants
+- [x] 3.3 Cookbook recipe is followable by someone not in this session — 6d71960
+- [x] 3.4 (Optional) Selective Stryker run on ReceiptConfirmService surfaces no high-value survived mutants — 6d71960
