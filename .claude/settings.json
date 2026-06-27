@@ -6,15 +6,21 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python -c \"import sys,json,subprocess; d=json.load(sys.stdin); f=d.get('tool_input',{}).get('file_path',''); sys.exit(subprocess.call(['dotnet','build','src/backend/ReceiptWell.sln','--no-restore']) if f.endswith('.cs') else 0)\"",
+            "command": "cd \"$(git rev-parse --show-toplevel)\" && python .claude/check_cs_build.py",
             "timeout": 30,
             "statusMessage": "Checking compilation..."
           },
           {
             "type": "command",
-            "command": "python -c \"import sys,json,subprocess; d=json.load(sys.stdin); f=d.get('tool_input',{}).get('file_path',''); sys.exit(subprocess.call(['dotnet','restore','src/backend/ReceiptWell.sln']) if f.endswith('.csproj') else 0)\"",
+            "command": "cd \"$(git rev-parse --show-toplevel)\" && python .claude/check_csproj_restore.py",
             "timeout": 60,
             "statusMessage": "Rebuilding package lock file..."
+          },
+          {
+            "type": "command",
+            "command": "cd \"$(git rev-parse --show-toplevel)\" && python .claude/check_frontend_lint.py",
+            "timeout": 60,
+            "statusMessage": "Linting frontend..."
           }
         ]
       }

@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { ComponentFixture } from '@angular/core/testing';
 import { Observable, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { ReceiptListComponent } from './list.component';
@@ -31,7 +32,7 @@ const stalePendingReceipt: ReceiptSummary = {
   uploadedAt: '2020-01-01T00:00:00Z'
 };
 
-function createComponent(getReceipts: () => ReturnType<ReceiptService['getReceipts']>) {
+function createComponent(getReceipts: (query?: string) => ReturnType<ReceiptService['getReceipts']>) {
   TestBed.configureTestingModule({
     imports: [ReceiptListComponent],
     providers: [
@@ -180,5 +181,97 @@ describe('ReceiptListComponent polling (Phase 3)', () => {
     component.ngOnDestroy();
     vi.advanceTimersByTime(5000);
     expect(callCount).toBe(1);
+  });
+});
+
+describe('ReceiptListComponent search (Phase 2)', () => {
+  function createSearchFixture(
+    getReceipts: (query?: string) => Observable<ReceiptSummary[]>
+  ): ComponentFixture<ReceiptListComponent> {
+    TestBed.configureTestingModule({
+      imports: [ReceiptListComponent],
+      providers: [
+        provideNoopAnimations(),
+        provideRouter([]),
+        { provide: ReceiptService, useValue: { getReceipts } }
+      ]
+    });
+    const fixture = TestBed.createComponent(ReceiptListComponent);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it('calls getReceipts with the typed term after 300ms debounce', () => {
+    const getReceipts = vi.fn(() => of([]) as Observable<ReceiptSummary[]>);
+    const fixture = createSearchFixture(getReceipts);
+    const component = fixture.componentInstance;
+
+    getReceipts.mockClear();
+    component.searchControl.setValue('rower');
+    vi.advanceTimersByTime(299);
+    expect(getReceipts).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(1);
+    expect(getReceipts).toHaveBeenCalledWith('rower');
+  });
+
+  it('shows the no-match panel when a term is active and results are empty', () => {
+    const fixture = createSearchFixture(() => of([]));
+    const component = fixture.componentInstance;
+
+    component.searchControl.setValue('xyz');
+    vi.advanceTimersByTime(300);
+    fixture.detectChanges();
+
+    expect(component.hasActiveSearch()).toBe(true);
+    expect(component.noSearchResults()).toBe(true);
+  });
+
+  it('manually deleting the term (debounce path) fetches without a query', () => {
+    const getReceipts = vi.fn(() => of([baseReceipt]) as Observable<ReceiptSummary[]>);
+    const fixture = createSearchFixture(getReceipts);
+    const component = fixture.componentInstance;
+
+    component.searchControl.setValue('rower');
+    vi.advanceTimersByTime(300);
+    const callsBefore = getReceipts.mock.calls.length;
+
+    component.searchControl.setValue('');
+    vi.advanceTimersByTime(300);
+    expect(getReceipts).toHaveBeenCalledTimes(callsBefore + 1);
+    expect(getReceipts).toHaveBeenLastCalledWith(undefined);
+  });
+
+  it('clearSearch() fetches immediately without a term and resets query atomically', () => {
+    const getReceipts = vi.fn(() => of([baseReceipt]) as Observable<ReceiptSummary[]>);
+    const fixture = createSearchFixture(getReceipts);
+    const component = fixture.componentInstance;
+
+    component.searchControl.setValue('rower');
+    vi.advanceTimersByTime(300);
+    getReceipts.mockClear();
+
+    component.clearSearch();
+
+    // No timer advance needed — bypasses debounce
+    expect(getReceipts).toHaveBeenCalledWith(undefined);
+    expect(component.query()).toBe('');
+    expect(component.searchControl.value).toBe('');
+  });
+
+  it('background poll carries the active search term', () => {
+    const getReceipts = vi.fn(() => of([pendingReceipt]) as Observable<ReceiptSummary[]>);
+    const fixture = createSearchFixture(getReceipts);
+    const component = fixture.componentInstance;
+
+    component.searchControl.setValue('rower');
+    vi.advanceTimersByTime(300);
+    getReceipts.mockClear();
+
+    vi.advanceTimersByTime(5000);
+    expect(getReceipts).toHaveBeenCalledWith('rower');
   });
 });

@@ -7,16 +7,28 @@ namespace ReceiptWell.Services;
 public partial class ReceiptQueryService(SearchClient searchClient, ILogger<ReceiptQueryService> logger)
 {
     public async Task<IReadOnlyList<ReceiptSummary>> GetReceiptsAsync(
-        string userId, CancellationToken cancellationToken)
+        string userId, string? query, CancellationToken cancellationToken)
     {
+        var term = query?.Trim();
+        var isSearch = !string.IsNullOrEmpty(term);
+
         var options = new SearchOptions
         {
             Filter = $"UserId eq '{userId}'",
             Size = 1000
         };
-        options.OrderBy.Add("UploadedAt desc");
 
-        var response = await searchClient.SearchAsync<ReceiptDocument>("*", options, cancellationToken);
+        if (isSearch)
+        {
+            options.SearchFields.Add("TagsPl");
+        }
+        else
+        {
+            options.OrderBy.Add("UploadedAt desc");
+        }
+
+        var searchText = isSearch ? term : "*";
+        var response = await searchClient.SearchAsync<ReceiptDocument>(searchText, options, cancellationToken);
 
         var summaries = new List<ReceiptSummary>();
         await foreach (var result in response.Value.GetResultsAsync())

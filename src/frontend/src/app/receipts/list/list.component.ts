@@ -1,17 +1,22 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ReceiptService, ReceiptSummary } from '../receipt.service';
 
 const MAX_VISIBLE_TAGS = 5;
 const POLL_INTERVAL_MS = 5000;
 const POLL_STALE_THRESHOLD_MS = 30 * 60 * 1000;
+const SEARCH_DEBOUNCE_MS = 300;
 
 @Component({
   selector: 'app-receipt-list',
@@ -20,8 +25,11 @@ const POLL_STALE_THRESHOLD_MS = 30 * 60 * 1000;
     MatCardModule,
     MatChipsModule,
     MatButtonModule,
+    MatFormFieldModule,
     MatIconModule,
+    MatInputModule,
     MatProgressSpinnerModule,
+    ReactiveFormsModule,
     RouterLink,
     DatePipe
   ],
@@ -31,23 +39,40 @@ const POLL_STALE_THRESHOLD_MS = 30 * 60 * 1000;
 export class ReceiptListComponent implements OnInit, OnDestroy {
   private readonly receiptService = inject(ReceiptService);
 
+  readonly searchControl = new FormControl('');
+  readonly query = signal('');
+
   readonly receipts = signal<ReceiptSummary[]>([]);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
   readonly hasPending = computed(() =>
     this.receipts().some(r => r.status === 'pending' && !this.isStalePending(r.uploadedAt))
   );
+  readonly hasActiveSearch = computed(() => this.query().trim().length > 0);
+  readonly noSearchResults = computed(
+    () => this.hasActiveSearch() && !this.loading() && this.receipts().length === 0
+  );
 
   private pollTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private fetchSubscription: Subscription | null = null;
+  private searchSubscription: Subscription | null = null;
 
   ngOnInit(): void {
+    this.searchSubscription = this.searchControl.valueChanges.pipe(
+      debounceTime(SEARCH_DEBOUNCE_MS),
+      distinctUntilChanged()
+    ).subscribe(term => {
+      this.query.set(term ?? '');
+      this.refreshReceipts();
+    });
+
     this.loadReceipts();
   }
 
   ngOnDestroy(): void {
     this.clearPollTimeout();
     this.fetchSubscription?.unsubscribe();
+    this.searchSubscription?.unsubscribe();
   }
 
   loadReceipts(): void {
@@ -66,23 +91,47 @@ export class ReceiptListComponent implements OnInit, OnDestroy {
     });
   }
 
-  private pollReceipts(): void {
+  clearSearch(): void {
+    // Suppress valueChanges so the debounce subscription doesn't also fire.
+    // Set query only after fresh results arrive so signals update atomically.
+    this.searchControl.setValue('', { emitEvent: false });
+    this.clearPollTimeout();
+    this.fetchSubscription?.unsubscribe();
+    this.fetchSubscription = this.receiptService.getReceipts(undefined).subscribe({
+      next: receipts => {
+        this.query.set('');
+        this.receipts.set(receipts);
+        this.schedulePollIfPending();
+      },
+      error: () => {
+        this.query.set('');
+        this.schedulePollIfPending();
+      }
+    });
+  }
+
+  private refreshReceipts(): void {
     this.runFetch({
       next: receipts => {
         this.receipts.set(receipts);
         this.schedulePollIfPending();
       },
       error: () => {
-        // Silent retry: background poll failures don't surface to the user.
+        // Silent: background refreshes (search debounce, polls) don't surface errors.
         this.schedulePollIfPending();
       }
     });
   }
 
+  private pollReceipts(): void {
+    this.refreshReceipts();
+  }
+
   private runFetch(handlers: { next: (receipts: ReceiptSummary[]) => void; error: () => void }): void {
     this.clearPollTimeout();
     this.fetchSubscription?.unsubscribe();
-    this.fetchSubscription = this.receiptService.getReceipts().subscribe(handlers);
+    const term = this.query();
+    this.fetchSubscription = this.receiptService.getReceipts(term || undefined).subscribe(handlers);
   }
 
   private schedulePollIfPending(): void {

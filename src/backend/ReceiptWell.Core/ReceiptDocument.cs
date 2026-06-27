@@ -1,4 +1,5 @@
 using Azure.Search.Documents.Indexes;
+using Azure.Search.Documents.Indexes.Models;
 
 namespace ReceiptWell.Models;
 
@@ -33,4 +34,12 @@ public class ReceiptDocument
 
     [SearchableField(IsFilterable = true)]
     public IList<string> Tags { get; set; } = [];
+
+    // Polish-stemmed mirror of Tags. The pl.microsoft analyzer lemmatizes both at index and
+    // query time so inflected queries ("rowery") match the stored lemma ("rower"). Search-only:
+    // not filterable, not the display source (ReceiptSummary reads Tags). Added as a NEW field
+    // so the existing Tags analyzer is never mutated (which would require dropping the index —
+    // the sole data store). Populated on enrichment; existing docs backfilled once.
+    [SearchableField(AnalyzerName = LexicalAnalyzerName.Values.PlMicrosoft)]
+    public IList<string> TagsPl { get; set; } = [];
 }

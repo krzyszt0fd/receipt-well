@@ -34,7 +34,7 @@ public class ReceiptQueryScopingTests
         var service = new ReceiptQueryService(
             searchClient, Substitute.For<ILogger<ReceiptQueryService>>());
 
-        await service.GetReceiptsAsync(callerId, CancellationToken.None);
+        await service.GetReceiptsAsync(callerId, query: null, CancellationToken.None);
 
         Assert.NotNull(capturedOptions);
         // Requirement: the query is scoped by the caller's identity field. We assert the

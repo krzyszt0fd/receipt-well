@@ -1,6 +1,21 @@
 @use '@angular/material' as mat;
 @use '../../../styles/colors' as c;
 
+.search-field {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.no-match-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 16px;
+  text-align: center;
+  color: c.$text-secondary;
+}
+
 .loading-row,
 .uploading-row {
   display: flex;

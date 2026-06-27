@@ -36,6 +36,8 @@ public partial class ReceiptStore(SearchClient searchClient, ILogger<ReceiptStor
                 ? new DateTimeOffset(date.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero)
                 : null,
             Tags = tags.ToList(),
+            // Mirror the same tags into the Polish-stemmed field so inflected queries match.
+            TagsPl = tags.ToList(),
             Status = ReceiptStatus.Ready
         };
         return searchClient.MergeOrUploadDocumentsAsync(new[] { document }, cancellationToken: cancellationToken);
@@ -59,6 +61,7 @@ internal sealed class ReceiptEnrichmentDocument
     public string? StoreName { get; set; }
     public DateTimeOffset? PurchaseDate { get; set; }
     public IList<string> Tags { get; set; } = [];
+    public IList<string> TagsPl { get; set; } = [];
     public string Status { get; set; } = string.Empty;
 }
 
