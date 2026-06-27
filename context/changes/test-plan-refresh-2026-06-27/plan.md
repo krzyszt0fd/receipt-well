@@ -162,13 +162,13 @@ To:
 
 #### Automated
 
-- [x] 1.1 §5 no longer contains "post-edit hook (run affected tests)"
-- [x] 1.2 §8 reads "Strategy (§1–§5) last reviewed: 2026-06-27"
-- [x] 1.3 File parses as valid markdown with no broken table rows
+- [x] 1.1 §5 no longer contains "post-edit hook (run affected tests)" — d3847b5
+- [x] 1.2 §8 reads "Strategy (§1–§5) last reviewed: 2026-06-27" — d3847b5
+- [x] 1.3 File parses as valid markdown with no broken table rows — d3847b5
 
 #### Manual
 
-- [x] 1.4 §3 Phase 4 row names covered sub-risk and remaining obligations; Status still "not started"
-- [x] 1.5 §5 has four new rows (3 per-edit + 1 pre-commit) with accurate descriptions; old placeholder gone
-- [x] 1.6 §6.6 "Tag-search + hooks" block present with all three lessons
-- [x] 1.7 No unintended edits outside the four target sections (verified via diff)
+- [x] 1.4 §3 Phase 4 row names covered sub-risk and remaining obligations; Status still "not started" — d3847b5
+- [x] 1.5 §5 has four new rows (3 per-edit + 1 pre-commit) with accurate descriptions; old placeholder gone — d3847b5
+- [x] 1.6 §6.6 "Tag-search + hooks" block present with all three lessons — d3847b5
+- [x] 1.7 No unintended edits outside the four target sections (verified via diff) — d3847b5
