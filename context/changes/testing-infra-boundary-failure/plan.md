@@ -253,26 +253,26 @@ None — additive, test-only.
 
 #### Automated
 
-- [x] 1.1 Solution builds with zero warnings
-- [x] 1.2 Positive-control test passes (`ReceiptConfirmFlowTests`)
-- [x] 1.3 Full suite still green
+- [x] 1.1 Solution builds with zero warnings — 1cf59a6
+- [x] 1.2 Positive-control test passes (`ReceiptConfirmFlowTests`) — 1cf59a6
+- [x] 1.3 Full suite still green — 1cf59a6
 
 #### Manual
 
-- [ ] 1.4 Harness reaches a real 200 (not a 400 InvalidBlob early-exit)
-- [ ] 1.5 Builder reads container names from config
+- [x] 1.4 Harness reaches a real 200 (not a 400 InvalidBlob early-exit) — 1cf59a6
+- [x] 1.5 Builder reads container names from config — 1cf59a6
 
 ### Phase 2: Failure-shape tests (all endpoints)
 
 #### Automated
 
-- [ ] 2.1 All Phase 2 tests pass (`~FailureShape`)
-- [ ] 2.2 Full suite green with zero warnings
+- [x] 2.1 All Phase 2 tests pass (`~FailureShape`)
+- [x] 2.2 Full suite green with zero warnings
 
 #### Manual
 
-- [ ] 2.3 Step-3 (queue) test confirms search committed before the throw
-- [ ] 2.4 200 cleanup test fails if DeleteAsync catch is changed to re-throw (optional spot-check)
+- [x] 2.3 Step-3 (queue) test confirms search committed before the throw
+- [x] 2.4 200 cleanup test fails if DeleteAsync catch is changed to re-throw (optional spot-check)
 
 ### Phase 3: Docs & sync
 

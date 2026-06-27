@@ -83,7 +83,7 @@ orchestrator updates Status as artifacts appear on disk.
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|------------|-----------------|---------------|------------|--------|---------------|
 | 1 | Backend test harness + access control | Bootstrap the backend test project (none today) and prove ownership scoping and the auth gate hold | #1, #2 | unit + integration | complete | context/changes/testing-access-control/ |
-| 2 | Infra-boundary failure shape | A failing Blob/Queue/Search/Function dependency surfaces a clean, honest 5xx — never a silent success | #7 | integration | not started | — |
+| 2 | Infra-boundary failure shape | A failing Blob/Queue/Search/Function dependency surfaces a clean, honest 5xx — never a silent success | #7 | integration | researched | context/changes/testing-infra-boundary-failure/ |
 | 3 | Upload integrity + input validation | Photo survives an extraction failure; the server enforces size/type itself | #4, #3 | integration + unit | not started | — |
 | 4 | Async extraction + business rules | Failed extraction reaches a visible terminal status (not stuck) and the poison path; tags normalize to PL | #5, #6 | unit + integration | not started | — |
 | 5 | Frontend integration + quality-gates wiring | Cover status rendering, guarded routes, and upload-validation UX where they add signal; wire CI gates | #1–#6 surface checks | Angular unit/integration + gates | not started | — |
