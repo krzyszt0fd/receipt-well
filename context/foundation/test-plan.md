@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-06-24 (Phase 1 complete — backend harness + access control)
+> Last updated: 2026-06-27 (Phase 2 complete — infra-boundary failure shape)
 
 ## 1. Strategy
 
@@ -83,7 +83,7 @@ orchestrator updates Status as artifacts appear on disk.
 | # | Phase name | Goal (one line) | Risks covered | Test types | Status | Change folder |
 |---|------------|-----------------|---------------|------------|--------|---------------|
 | 1 | Backend test harness + access control | Bootstrap the backend test project (none today) and prove ownership scoping and the auth gate hold | #1, #2 | unit + integration | complete | context/changes/testing-access-control/ |
-| 2 | Infra-boundary failure shape | A failing Blob/Queue/Search/Function dependency surfaces a clean, honest 5xx — never a silent success | #7 | integration | researched | context/changes/testing-infra-boundary-failure/ |
+| 2 | Infra-boundary failure shape | A failing Blob/Queue/Search/Function dependency surfaces a clean, honest 5xx — never a silent success | #7 | integration | complete | context/changes/testing-infra-boundary-failure/ |
 | 3 | Upload integrity + input validation | Photo survives an extraction failure; the server enforces size/type itself | #4, #3 | integration + unit | not started | — |
 | 4 | Async extraction + business rules | Failed extraction reaches a visible terminal status (not stuck) and the poison path; tags normalize to PL | #5, #6 | unit + integration | not started | — |
 | 5 | Frontend integration + quality-gates wiring | Cover status rendering, guarded routes, and upload-validation UX where they add signal; wire CI gates | #1–#6 surface checks | Angular unit/integration + gates | not started | — |
@@ -155,7 +155,15 @@ API integration tests boot the real app offline through `ReceiptWellWebFactory` 
 - **Identity injection** (`TestAuthHandler`): the `"Test"` scheme is the default, and it reads request headers — `X-Test-Oid: <oid>` authenticates with that `oid`; `X-Test-No-Oid` authenticates a principal *without* an `oid` claim; no header models "no token". Only authentication is simulated — the **real** authorization policy (`RequireAuthenticatedUser` + `RequireClaim("oid")`) decides the outcome, so the 401/403 split comes from production code.
 - **Auth-gate pattern** (`AuthGateTests.cs`): a `[Theory]` over the protected routes (`TheoryData<string,string>` of method+path) asserts no header → **401** and `X-Test-No-Oid` → **403** on each route, plus one positive control (`X-Test-Oid` set → response is *not* 401/403) so the gate assertions are not vacuously true.
 - **Two-identity ownership pattern** (`ReceiptConfirmOwnershipTests.cs`): use two distinct `oid` values (a single-user fixture hides the leak). Confirm a blob staged under another user's prefix (`X-Test-Oid: user-a`, `stagingBlobName = "user-b/<guid>"`) → **403**, then assert the rejected path did **no** cross-user work via `DidNotReceiveWithAnyArgs()` on the substituted clients (`GetBlobContainerClient`, `MergeOrUploadDocumentsAsync`, `SendMessageAsync`). Include the sibling-prefix edge (`abc` vs `abcd/…`) to prove the trailing `/` in the `Ordinal` guard is load-bearing.
-- Failing-dependency / honest-5xx tests land in §3 Phase 2.
+- **Honest-5xx / infra-boundary failure test** (`ReceiptConfirmFailureShapeTests.cs`, `ReceiptEndpointFailureShapeTests.cs`): every failure case asserts three things — (1) HTTP status, (2) RFC 7807 body shape, (3) side-effect commit boundary.
+  - **`ProblemDetailsAssertions.AssertHonest500Async(response)`** (`Infrastructure/ProblemDetailsAssertions.cs`): asserts status 500, content-type `application/problem+json`, `status` field == 500, and no leaked `exception` / `stackTrace` / non-null `detail` in the body. Call this from every honest-500 test instead of re-implementing body checks.
+  - **`ConfirmFlowHarness(factory, oid, ConfirmStep.X)`** (`Infrastructure/ConfirmFlowHarness.cs`): drives the non-atomic confirm chain up to step X with success stubs, then injects `RequestFailedException` at step X. The constructor clears accumulated NSubstitute call history on all shared factory clients and re-stubs the whole chain — tests declare only which step throws. `ConfirmStep` values: `BlobCopy`, `SearchWrite`, `QueueSend`, `StagingDelete`, `Complete` (happy path). Exposes `StagingBlobName` (send in the request body), `StagingBlobClient`, and `TargetBlobClient` for call assertions.
+  - **`ClearReceivedCalls()` per test method**: the factory is `IClassFixture` — one instance per class — so NSubstitute call history accumulates across methods. `ConfirmFlowHarness` handles the clear-and-restub preamble for the confirm path. For single-step tests, call `factory.<Client>.ClearReceivedCalls()` manually at the top of each method.
+  - **`CanGenerateSasUri → true` SAS bypass**: stub `stagingBlob.CanGenerateSasUri.Returns(true)` + `stagingBlob.GenerateSasUri(Arg.Any<BlobSasBuilder>()).Returns(new Uri("…"))` to skip the `DelegationTokenProvider` / `GetUserDelegationKeyAsync` path — irrelevant plumbing for failure-shape tests.
+  - **Exception injection**: `.Returns(Task.FromException<TResponse>(new RequestFailedException(500, "Simulated …")))` — `RequestFailedException` is in `Azure.Core` (transitive; no new package).
+  - **Fire-and-forget case (`StagingDelete`)**: staging cleanup swallows the exception — the response is **200**. Assert `HttpStatusCode.OK` + the full side-effect boundary; do **not** call `AssertHonest500Async`. Document the intentional contract in an XML-doc comment on the test.
+  - **Container names from config**: read `AzureStorage:StagingContainerName` / `AzureStorage:ReceiptsContainerName` from `factory.Services.GetRequiredService<IConfiguration>()` — never hard-code container names in tests.
+  - **Model factories are version-sensitive**: `BlobProperties`, `BlobDownloadResult`, `BlobCopyInfo`, `SendReceipt`, `IndexDocumentsResult` have no public constructors — build via `BlobsModelFactory` / `QueuesModelFactory` / `SearchModelFactory`. Confirm argument lists against `Directory.Packages.props` when a factory call fails to compile.
 
 ### 6.3 Adding an Azure Functions test
 
@@ -180,6 +188,11 @@ here capturing anything surprising the rollout phase taught.)
 - **Remove the startup hosted service.** `AddHostedService<SearchIndexInitializer>()` resolves the Search clients on host start and would call Azure; `ConfigureTestServices` removes that single `IHostedService` descriptor so the host boots offline.
 - **`SearchModelFactory` is version-sensitive.** `SearchResults<T>` has no public constructor — build the filter-capture stub's return with `SearchModelFactory.SearchResults(values, totalCount, facets, coverage, rawResponse)` + `Response.FromValue(...)`. The exact overload/argument list shifts between `Azure.Search.Documents` versions; confirm against `Directory.Packages.props` when it changes.
 - **Behaviour fix shipped with the tests.** `GetUserId()` runs outside each handler's `try`, so a valid-but-`oid`-less token used to throw → **500**. Phase 2 added `.RequireClaim("oid")` to the global `FallbackPolicy`, so the claimless principal is now rejected with **403 in middleware** before any handler runs.
+
+**Phase 2 — Infra-boundary failure shape (2026-06-27):**
+- **SAS bypass is the key cost saver.** `CanGenerateSasUri = true` + `GenerateSasUri → Uri` skips the `DelegationTokenProvider` / `GetUserDelegationKeyAsync` base64-signing path entirely (`ReceiptConfirmService.cs:169`). Without this, every confirm test would need a `UserDelegationKey` model-factory call and a delegation-key fetch stub — irrelevant plumbing for failure-shape coverage.
+- **Container names are config-coupled.** `ReceiptConfirmService` reads `AzureStorage:StagingContainerName` and `AzureStorage:ReceiptsContainerName` from `IConfiguration`; the harness resolves the same keys from `factory.Services` so tests never drift from the app's own config view.
+- **Model factories are version-sensitive across all Azure SDKs.** `BlobCopyInfo`, `BlobDownloadResult`, `BlobProperties`, and `SendReceipt` (Queues) have no public constructors — always use `BlobsModelFactory` / `QueuesModelFactory`. Argument lists shift between package versions; confirm against `Directory.Packages.props` when compilation fails.
 
 ## 7. What We Deliberately Don't Test
 

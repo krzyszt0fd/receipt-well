@@ -266,22 +266,22 @@ None — additive, test-only.
 
 #### Automated
 
-- [x] 2.1 All Phase 2 tests pass (`~FailureShape`)
-- [x] 2.2 Full suite green with zero warnings
+- [x] 2.1 All Phase 2 tests pass (`~FailureShape`) — 1110d54
+- [x] 2.2 Full suite green with zero warnings — 1110d54
 
 #### Manual
 
-- [x] 2.3 Step-3 (queue) test confirms search committed before the throw
-- [x] 2.4 200 cleanup test fails if DeleteAsync catch is changed to re-throw (optional spot-check)
+- [x] 2.3 Step-3 (queue) test confirms search committed before the throw — 1110d54
+- [x] 2.4 200 cleanup test fails if DeleteAsync catch is changed to re-throw (optional spot-check) — 1110d54
 
 ### Phase 3: Docs & sync
 
 #### Automated
 
-- [ ] 3.1 §3 Phase 2 status reads `complete`
-- [ ] 3.2 §6.2 honest-5xx placeholder replaced
+- [x] 3.1 §3 Phase 2 status reads `complete`
+- [x] 3.2 §6.2 honest-5xx placeholder replaced
 
 #### Manual
 
-- [ ] 3.3 Cookbook recipe is followable by someone not in this session
-- [ ] 3.4 (Optional) Selective Stryker run on ReceiptConfirmService surfaces no high-value survived mutants
+- [x] 3.3 Cookbook recipe is followable by someone not in this session
+- [x] 3.4 (Optional) Selective Stryker run on ReceiptConfirmService surfaces no high-value survived mutants
