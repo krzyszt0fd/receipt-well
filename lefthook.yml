@@ -1,0 +1,4 @@
+pre-commit:
+  commands:
+    backend-tests:
+      run: dotnet test src/backend/ReceiptWell.sln
