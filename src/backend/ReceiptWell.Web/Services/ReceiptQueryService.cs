@@ -20,20 +20,14 @@ public partial class ReceiptQueryService(SearchClient searchClient, ILogger<Rece
 
         if (isSearch)
         {
-            // Lucene full syntax enables the wildcard; append * so a prefix like "słuch"
-            // matches the full token "słuchawki" in the index. Wildcard queries bypass the
-            // pl.microsoft analyzer at query time, but the stored lemma still starts with the
-            // user's prefix, so prefix + stemmed-inflection matching both work.
-            options.QueryType = SearchQueryType.Full;
             options.SearchFields.Add("TagsPl");
         }
         else
         {
-            // Browse path: newest-first, full list.
             options.OrderBy.Add("UploadedAt desc");
         }
 
-        var searchText = isSearch ? term! + "*" : "*";
+        var searchText = isSearch ? term : "*";
         var response = await searchClient.SearchAsync<ReceiptDocument>(searchText, options, cancellationToken);
 
         var summaries = new List<ReceiptSummary>();

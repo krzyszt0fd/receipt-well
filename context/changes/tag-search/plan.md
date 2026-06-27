@@ -252,13 +252,13 @@ Query volume is low (PRD `target_scale.qps: low`). Debouncing input at ~300ms ke
 
 - [x] 1.1 Solution builds with zero warnings: `dotnet build src/backend/ReceiptWell.sln` — 14634f9
 - [x] 1.2 All backend tests pass: `dotnet test src/backend/ReceiptWell.sln` — 14634f9
-- [x] 1.3 New search tests assert user-scoping holds on the search path and the term is applied to `TagsPl` — 14634f9
+- [x] 1.3 New search tests assert user-scoping holds on the search path and the term is applied to `TagsPl` — 14634f9 (fixed: tests were asserting prefix wildcard behavior; corrected to plain-term + pl.microsoft in impl-review)
 
 #### Manual
 
 - [ ] 1.4 `TagsPl` field present on the live index after startup; index updated, not recreated
 - [ ] 1.5 Backfill ran once; a pre-change receipt is findable by its tag
-- [ ] 1.6 Polish stemming works: a receipt tagged "rower" is returned by `?q=rowery`
+- [ ] 1.6 Polish stemming works: a receipt tagged "rower" is returned by `?q=rowery` — re-verify after impl-review fix (QueryType.Full + wildcard removed; plain searchText now used so pl.microsoft applies at query time)
 - [ ] 1.7 `GET /receipts?q=<tag>` returns only the caller's receipts whose tags match the term
 - [ ] 1.8 `GET /receipts` (no `q`) and `GET /receipts?q=` (blank) both return the full newest-first list
 - [ ] 1.9 A term with no matches returns an empty array (HTTP 200, not 400)
@@ -268,7 +268,7 @@ Query volume is low (PRD `target_scale.qps: low`). Debouncing input at ~300ms ke
 #### Automated
 
 - [x] 2.1 Frontend builds: `npm --prefix src/frontend run build` — 784b159
-- [x] 2.2 Lint passes: `npm --prefix src/frontend run lint` — 784b159
+- [x] 2.2 Lint passes: `npm --prefix src/frontend run lint` — 784b159 (fixed pre-existing empty-method lint error in app.spec.ts during impl-review)
 - [x] 2.3 Component specs pass: `npm --prefix src/frontend test` — 784b159
 
 #### Manual

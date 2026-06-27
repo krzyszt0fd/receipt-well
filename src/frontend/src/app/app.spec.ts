@@ -7,6 +7,7 @@ const mockMsalService = {
   instance: {
     getAllAccounts: () => [],
     getActiveAccount: () => null,
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     setActiveAccount: () => {}
   }
 };
