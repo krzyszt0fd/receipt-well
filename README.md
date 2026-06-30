@@ -22,7 +22,8 @@ Upload a photo of a receipt, get structured data (merchant, date, amount, line i
 receipt-well/
 ├── src/
 │   ├── backend/          # ASP.NET Core API — see src/backend/README.md
-│   └── frontend/         # Angular SPA     — see src/frontend/README.md
+│   ├── frontend/         # Angular SPA     — see src/frontend/README.md
+│   └── e2e-tests/        # Playwright E2E tests (Risk #5 async flow, Risk #6 tag-search UI)
 ├── infra/                # Terraform — Azure resources (App Service, Storage, Key Vault, SWA)
 ├── context/
 │   ├── foundation/       # PRD, tech-stack, roadmap, lessons, infrastructure decisions
@@ -36,6 +37,7 @@ See the dedicated READMEs for local setup:
 
 - **Backend** — [`src/backend/README.md`](src/backend/README.md): build, run, test commands
 - **Frontend** — [`src/frontend/README.md`](src/frontend/README.md): local dev server, Entra auth config
+- **E2E tests** — [`src/e2e-tests/`](src/e2e-tests/): Playwright; requires `npm run start:local` for the frontend and a one-time auth setup (`npx playwright test --project=setup` from `src/e2e-tests/`)
 
 ## Project context
 
