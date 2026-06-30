@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-06-29 (e2e candidates promoted: Risk #5 async flow + Risk #6 no-match state rendering)
+> Last updated: 2026-06-30 (Risk #5 + Risk #6 E2E specs shipped; Phase 5 implementing; CI e2e gate + frontend lint/test wired)
 
 ## 1. Strategy
 
@@ -86,7 +86,7 @@ orchestrator updates Status as artifacts appear on disk.
 | 2 | Infra-boundary failure shape | A failing Blob/Queue/Search/Function dependency surfaces a clean, honest 5xx — never a silent success | #7 | integration | complete | context/changes/testing-infra-boundary-failure/ |
 | 3 | Upload integrity + input validation | Photo survives an extraction failure; the server enforces size/type itself | #4, #3 | integration + unit | not started | — |
 | 4 | Async extraction + business rules | Failed extraction reaches a visible terminal status (not stuck) and the poison path (#5); `TagNormalizer` produces PL tags with requirement-derived oracle (#6 normalization). Note: Risk #6 search-retrieval (correct field, scoping, HTTP contract) already covered by `ReceiptSearchTests` + `ReceiptSearchEndpointTests` (tag-search TDD, PR #7). | #5, #6 | unit + integration | not started | — |
-| 5 | Frontend integration + quality-gates wiring | Cover status rendering, guarded routes, and upload-validation UX where they add signal; wire CI gates; e2e for async receipt processing flow (Risk #5 — cross-system) and tag-search no-match state rendering (Risk #6 — visual) | #1–#6 surface checks | Angular unit/integration + e2e (Playwright) + gates | not started | — |
+| 5 | Frontend integration + quality-gates wiring | Cover status rendering, guarded routes, and upload-validation UX where they add signal; wire CI gates; e2e for async receipt processing flow (Risk #5 — cross-system) and tag-search no-match state rendering (Risk #6 — visual). Note: E2E specs for Risk #5 (`async-processing-status.spec.ts` — polling flow) and Risk #6 (`tag-search-no-match.spec.ts` — no-match panel) shipped out-of-band; CI e2e gate wired to develop push + frontend lint/test added to deploy pipeline. | #1–#6 surface checks | Angular unit/integration + e2e (Playwright) + gates | implementing | — |
 
 **Status vocabulary** (fixed — parser literals): `not started` → `change opened`
 → `researched` → `planned` → `implementing` → `complete`.
@@ -105,7 +105,7 @@ The classic test base for this project. AI-native tools (if any) carry a
 | backend unit + integration | none yet — see §3 Phase 1 | — | No test project exists. Phase 1 bootstraps **xUnit** + `Microsoft.AspNetCore.Mvc.Testing` (`WebApplicationFactory`) for API integration |
 | backend Functions tests | none yet — see §3 Phase 4 | — | Isolated-worker .NET 9 Functions tested via direct handler invocation with faked bindings |
 | frontend unit + integration | Vitest (via `@angular/build:unit-test`) | 4.0.8 | Already wired; real specs in `src/frontend/src/app/receipts/` (list, upload). Run with `ng test` |
-| e2e (Playwright) | planned — §3 Phase 5 | — | Two flows: (1) upload → queue → Function → Search → UI status update (Risk #5 — cross-system; no cheaper layer covers the full chain); (2) tag-search no-match panel rendering, distinct from empty-state (Risk #6 — visual; browser render is the only verification). S-04 shipped; prior rationale for revisit satisfied. |
+| e2e (Playwright) | `@playwright/test` | 1.61.1 | Live in `src/e2e-tests/`. Two specs: `async-processing-status.spec.ts` (Risk #5 — polling flow) and `tag-search-no-match.spec.ts` (Risk #6 — no-match panel). CI: `e2e-tests.yml` on push to develop. Auth via ROPC storageState (`playwright/.auth/user.json`). |
 | (optional) AI-native | none | n/a | Extraction-quality eval intentionally excluded — see §3 note and §7 |
 
 **Stack grounding tools (current session):**
@@ -134,7 +134,7 @@ phase lands; before that, the gate is `planned`.
 | per-edit frontend lint + typecheck (`check_frontend_lint.py`) | local (agent loop, `.ts`/`.html` in frontend) | required | ESLint violations, TypeScript type errors at edit time |
 | per-edit csproj restore check (`check_csproj_restore.py`) | local (agent loop, `.csproj` edits) | required | restore failures at edit time |
 | pre-commit backend test suite (lefthook) | local (git pre-commit) | required | backend regressions before commit (known gap: no glob filter, runs on all commits regardless of which files changed; frontend has no commit gate — deferred to Phase 5) |
-| e2e on critical flows (Playwright) | CI on PR | required after §3 Phase 5 | Risk #5: async processing → visible status change end-to-end; Risk #6: tag-search no-match panel rendering |
+| e2e on critical flows (Playwright) | CI on push to develop | required after §3 Phase 5 | Risk #5: async processing → visible status change end-to-end; Risk #6: tag-search no-match panel rendering |
 
 Existing CI lives in GitHub Actions (backend → Azure App Service, frontend →
 Azure Static Web Apps). Phases 1, 2, and 5 wire their gates into that pipeline.
@@ -202,6 +202,11 @@ here capturing anything surprising the rollout phase taught.)
 - **Per-edit hooks run build/lint, not tests.** `dotnet test` is too slow for the agent loop — tests moved to commit (lefthook pre-commit, full backend suite). Three per-edit hooks cover: C# build (`check_cs_build.py`), frontend lint+tsc (`check_frontend_lint.py`), csproj restore (`check_csproj_restore.py`).
 - **Risk #6 split.** Tag-search TDD covered the search-retrieval half of Risk #6 (`ReceiptSearchTests`, `ReceiptSearchEndpointTests`, 5 frontend specs — correct field, scoping, HTTP contract). The normalization half (`TagNormalizer` unit test with requirement-derived oracle — "bike"/"bicycle" → "rower") has zero automated coverage and remains a Phase 4 obligation.
 
+**E2E — Phase 5 partial (out-of-band, 2026-06-30):**
+- **Risk #5 and Risk #6 E2E specs shipped before the formal Phase 5 rollout.** `async-processing-status.spec.ts` (Risk #5 — polling flow: pending → ready) and `tag-search-no-match.spec.ts` (Risk #6 — no-match panel rendering) were authored across the e2e preparation + tag-search changes, not a dedicated Phase 5 change folder.
+- **Polling mock pattern for async status.** Intercept `GET /receipts` with `page.route()`, return `pending` on the first call and `ready` on subsequent calls. Register `waitForResponse()` *before* `page.goto()` to avoid the race where a fast response arrives before the listener is set up.
+- **`webServer.command` must prefix the frontend path.** When `playwright.config.ts` lives in `src/e2e-tests/`, use `npm --prefix ../frontend run start:local` — plain `npm run start:local` fails because it executes from the e2e-tests directory and can't find the frontend `package.json`.
+
 ## 7. What We Deliberately Don't Test
 
 Exclusions agreed during the rollout (Phase 2 interview, Q5). Future
@@ -215,7 +220,7 @@ contributors should respect these unless the underlying assumption changes.
 
 ## 8. Freshness Ledger
 
-- Strategy (§1–§5) last reviewed: 2026-06-29
+- Strategy (§1–§5) last reviewed: 2026-06-30
 - Stack versions last verified: 2026-06-23
 - AI-native tool references last verified: 2026-06-23
 
