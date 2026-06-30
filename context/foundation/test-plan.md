@@ -6,7 +6,7 @@
 >
 > Refresh: re-run `/10x-test-plan --refresh` when stale (see §8).
 >
-> Last updated: 2026-06-27 (Phase 2 complete — infra-boundary failure shape)
+> Last updated: 2026-06-29 (e2e candidates promoted: Risk #5 async flow + Risk #6 no-match state rendering)
 
 ## 1. Strategy
 
@@ -86,7 +86,7 @@ orchestrator updates Status as artifacts appear on disk.
 | 2 | Infra-boundary failure shape | A failing Blob/Queue/Search/Function dependency surfaces a clean, honest 5xx — never a silent success | #7 | integration | complete | context/changes/testing-infra-boundary-failure/ |
 | 3 | Upload integrity + input validation | Photo survives an extraction failure; the server enforces size/type itself | #4, #3 | integration + unit | not started | — |
 | 4 | Async extraction + business rules | Failed extraction reaches a visible terminal status (not stuck) and the poison path (#5); `TagNormalizer` produces PL tags with requirement-derived oracle (#6 normalization). Note: Risk #6 search-retrieval (correct field, scoping, HTTP contract) already covered by `ReceiptSearchTests` + `ReceiptSearchEndpointTests` (tag-search TDD, PR #7). | #5, #6 | unit + integration | not started | — |
-| 5 | Frontend integration + quality-gates wiring | Cover status rendering, guarded routes, and upload-validation UX where they add signal; wire CI gates | #1–#6 surface checks | Angular unit/integration + gates | not started | — |
+| 5 | Frontend integration + quality-gates wiring | Cover status rendering, guarded routes, and upload-validation UX where they add signal; wire CI gates; e2e for async receipt processing flow (Risk #5 — cross-system) and tag-search no-match state rendering (Risk #6 — visual) | #1–#6 surface checks | Angular unit/integration + e2e (Playwright) + gates | not started | — |
 
 **Status vocabulary** (fixed — parser literals): `not started` → `change opened`
 → `researched` → `planned` → `implementing` → `complete`.
@@ -105,7 +105,7 @@ The classic test base for this project. AI-native tools (if any) carry a
 | backend unit + integration | none yet — see §3 Phase 1 | — | No test project exists. Phase 1 bootstraps **xUnit** + `Microsoft.AspNetCore.Mvc.Testing` (`WebApplicationFactory`) for API integration |
 | backend Functions tests | none yet — see §3 Phase 4 | — | Isolated-worker .NET 9 Functions tested via direct handler invocation with faked bindings |
 | frontend unit + integration | Vitest (via `@angular/build:unit-test`) | 4.0.8 | Already wired; real specs in `src/frontend/src/app/receipts/` (list, upload). Run with `ng test` |
-| e2e | none yet — not scheduled | — | No critical flow currently justifies the e2e cost over integration; revisit if S-04 search ships a multi-step UI |
+| e2e (Playwright) | planned — §3 Phase 5 | — | Two flows: (1) upload → queue → Function → Search → UI status update (Risk #5 — cross-system; no cheaper layer covers the full chain); (2) tag-search no-match panel rendering, distinct from empty-state (Risk #6 — visual; browser render is the only verification). S-04 shipped; prior rationale for revisit satisfied. |
 | (optional) AI-native | none | n/a | Extraction-quality eval intentionally excluded — see §3 note and §7 |
 
 **Stack grounding tools (current session):**
@@ -134,7 +134,7 @@ phase lands; before that, the gate is `planned`.
 | per-edit frontend lint + typecheck (`check_frontend_lint.py`) | local (agent loop, `.ts`/`.html` in frontend) | required | ESLint violations, TypeScript type errors at edit time |
 | per-edit csproj restore check (`check_csproj_restore.py`) | local (agent loop, `.csproj` edits) | required | restore failures at edit time |
 | pre-commit backend test suite (lefthook) | local (git pre-commit) | required | backend regressions before commit (known gap: no glob filter, runs on all commits regardless of which files changed; frontend has no commit gate — deferred to Phase 5) |
-| e2e on critical flows | CI on PR | optional — not scheduled | broken critical user paths (revisit when search UI ships) |
+| e2e on critical flows (Playwright) | CI on PR | required after §3 Phase 5 | Risk #5: async processing → visible status change end-to-end; Risk #6: tag-search no-match panel rendering |
 
 Existing CI lives in GitHub Actions (backend → Azure App Service, frontend →
 Azure Static Web Apps). Phases 1, 2, and 5 wire their gates into that pipeline.
@@ -215,7 +215,7 @@ contributors should respect these unless the underlying assumption changes.
 
 ## 8. Freshness Ledger
 
-- Strategy (§1–§5) last reviewed: 2026-06-27
+- Strategy (§1–§5) last reviewed: 2026-06-29
 - Stack versions last verified: 2026-06-23
 - AI-native tool references last verified: 2026-06-23
 
