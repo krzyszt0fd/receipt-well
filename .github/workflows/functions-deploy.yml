@@ -23,7 +23,10 @@ jobs:
           dotnet-version: '9.x'
 
       - name: Restore
-        run: dotnet restore src/backend/ReceiptWell.Functions/ReceiptWell.Functions.csproj
+        run: dotnet restore src/backend/ReceiptWell.sln
+
+      - name: Test
+        run: dotnet test src/backend/ReceiptWell.sln --no-restore --verbosity minimal
 
       - name: Build & Publish
         run: dotnet publish src/backend/ReceiptWell.Functions/ReceiptWell.Functions.csproj -c Release -o ./publish --no-restore

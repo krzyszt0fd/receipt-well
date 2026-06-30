@@ -1,20 +1,33 @@
+// seed.spec.ts — exemplar for /10x-e2e skill.
+// Every generated test models these patterns:
+//   getByRole locators, page.route() for API determinism,
+//   waitForResponse/toBeVisible (never waitForTimeout), auth via storageState.
+
 import { test, expect } from '@playwright/test';
 
-test('has title', async ({ page }) => {
-  await page.goto('/home/upload');
+const apiBase = process.env['LOCAL_HOST'] ?? 'https://localhost:7028';
 
-  // Expect a title "to contain" a substring.
-  await expect(page).toHaveTitle('Frontend');
-});
+test('receipts list page renders heading and receipt row after navigation', async ({ page }) => {
+  await page.route(`${apiBase}/receipts*`, async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([{
+        id: 'seed-1',
+        fileName: 'seed-receipt.jpg',
+        fileSize: 10240,
+        status: 'ready',
+        uploadedAt: new Date(Date.now() - 86_400_000).toISOString(),
+        storeName: 'Seed Store',
+        purchaseDate: null,
+        tags: ['rower']
+      }])
+    });
+  });
 
-test('Navigate to receipts', async ({ page }) => {
-  await page.goto('/home/upload');
+  await page.goto('/home/receipts');
 
-  // Click the get started link.
-  await page.getByRole('button', { name: 'View my receipts' }).click();
-
-  page.waitForURL('/home/receipts');
-
-  // Expects page to have a heading with the name of Installation.
+  // Wait for state — not time; assertions retry automatically
   await expect(page.getByRole('heading', { name: 'My Receipts' })).toBeVisible();
+  await expect(page.getByText('seed-receipt.jpg')).toBeVisible();
 });
