@@ -203,15 +203,15 @@ With:
 
 #### Automated
 
-- [x] 2.1 Header line reads "Last updated: 2026-06-30"
-- [x] 2.2 §3 Phase 5 row Status reads "implementing"
-- [x] 2.3 §5 e2e gate "Where" reads "CI on push to develop"
-- [x] 2.4 §8 reads "Strategy (§1–§5) last reviewed: 2026-06-30"
-- [x] 2.5 File parses as valid markdown (no broken table rows)
+- [x] 2.1 Header line reads "Last updated: 2026-06-30" — c3a9e18
+- [x] 2.2 §3 Phase 5 row Status reads "implementing" — c3a9e18
+- [x] 2.3 §5 e2e gate "Where" reads "CI on push to develop" — c3a9e18
+- [x] 2.4 §8 reads "Strategy (§1–§5) last reviewed: 2026-06-30" — c3a9e18
+- [x] 2.5 File parses as valid markdown (no broken table rows) — c3a9e18
 
 #### Manual
 
-- [x] 2.6 §3 Phase 5 goal names both specs + CI wired; other cells unchanged
-- [x] 2.7 §4 Playwright row shows version 1.61.1 and "Live in `src/e2e-tests/`"
-- [x] 2.8 §6.6 E2E block has three bullets
-- [x] 2.9 No unintended edits outside the six target sections (verified via diff)
+- [x] 2.6 §3 Phase 5 goal names both specs + CI wired; other cells unchanged — c3a9e18
+- [x] 2.7 §4 Playwright row shows version 1.61.1 and "Live in `src/e2e-tests/`" — c3a9e18
+- [x] 2.8 §6.6 E2E block has three bullets — c3a9e18
+- [x] 2.9 No unintended edits outside the six target sections (verified via diff) — c3a9e18

@@ -1,7 +1,7 @@
 ---
 change_id: test-plan-refresh-2026-06-30
 title: Test plan refresh 2026-06-30
-status: implementing
+status: implemented
 created: 2026-06-30
 updated: 2026-06-30
 archived_at: null
