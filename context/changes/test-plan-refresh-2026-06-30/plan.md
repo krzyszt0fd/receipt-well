@@ -190,10 +190,10 @@ With:
 
 #### Automated
 
-- [ ] 1.1 async-processing-status.spec.ts committed (no longer untracked)
-- [ ] 1.2 e2e-tests.yml diff from HEAD is empty
-- [ ] 1.3 frontend-deploy.yml diff from HEAD is empty
-- [ ] 1.4 playwright.config.ts diff from HEAD is empty
+- [x] 1.1 async-processing-status.spec.ts committed (no longer untracked) — defe8eb
+- [x] 1.2 e2e-tests.yml diff from HEAD is empty — defe8eb
+- [x] 1.3 frontend-deploy.yml diff from HEAD is empty — defe8eb
+- [x] 1.4 playwright.config.ts diff from HEAD is empty — defe8eb
 
 #### Manual
 
