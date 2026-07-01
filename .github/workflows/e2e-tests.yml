@@ -8,7 +8,7 @@ jobs:
     timeout-minutes: 20
     runs-on: ubuntu-latest
     env:
-      AUTHORITY: ${{ secrets.E2E_AUTHORITY }}
+      AUTHORITY: ${{ vars.AUTHORITY }}
       TEST_USERNAME: ${{ secrets.E2E_TEST_USERNAME }}
       TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
     steps:
