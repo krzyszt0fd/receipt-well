@@ -96,7 +96,7 @@ export default defineConfig<TestOptions>({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-     command: 'npm --prefix ../frontend run start:local',
+     command: 'npm --prefix ../frontend run start:ci',
      url: 'http://localhost:4200',
      reuseExistingServer: !process.env.CI,
   },

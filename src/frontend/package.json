@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "start:local": "ng serve --configuration=local",
+    "start:ci": "ng serve --configuration=ci",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",

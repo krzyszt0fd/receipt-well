@@ -21,6 +21,13 @@ jobs:
       run: npm ci
       working-directory: src/frontend
 
+    - name: Substitute environment placeholders
+      run: |
+        sed -i "s|__AUTHORITY__|${{ vars.AUTHORITY }}|g" src/frontend/src/environments/environment.ci.ts
+        sed -i "s|__KNOWN_AUTHORITY__|${{ vars.KNOWN_AUTHORITY }}|g" src/frontend/src/environments/environment.ci.ts
+        sed -i "s|__CLIENT_ID__|${{ vars.MSAL_CLIENT_ID }}|g" src/frontend/src/environments/environment.ci.ts
+        sed -i "s|__API_SCOPE__|${{ vars.API_SCOPE }}|g" src/frontend/src/environments/environment.ci.ts
+
     - name: Install E2E dependencies
       run: npm ci
       working-directory: src/e2e-tests
