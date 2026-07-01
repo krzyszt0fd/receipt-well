@@ -7,11 +7,10 @@
 //   via the list component's polling mechanism. If polling is never scheduled, or the status chip
 //   is not re-rendered after a poll, this test fails.
 
-import { test, expect } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from '../with-options';
 
-const apiBase = process.env['LOCAL_HOST'] ?? 'https://localhost:7028';
-
-test('pending receipt transitions to resolved status via polling — never stuck forever', async ({ page }) => {
+test('pending receipt transitions to resolved status via polling — never stuck forever', async ({ page, apiBase }) => {
   let receiptCallCount = 0;
 
   // First GET /receipts → 'pending'; subsequent calls → 'ready'

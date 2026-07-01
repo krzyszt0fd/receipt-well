@@ -3,11 +3,10 @@
 //   getByRole locators, page.route() for API determinism,
 //   waitForResponse/toBeVisible (never waitForTimeout), auth via storageState.
 
-import { test, expect } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from '../with-options';
 
-const apiBase = process.env['LOCAL_HOST'] ?? 'https://localhost:7028';
-
-test('receipts list page renders heading and receipt row after navigation', async ({ page }) => {
+test('receipts list page renders heading and receipt row after navigation', async ({ page, apiBase }) => {
   await page.route(`${apiBase}/receipts*`, async route => {
     await route.fulfill({
       status: 200,

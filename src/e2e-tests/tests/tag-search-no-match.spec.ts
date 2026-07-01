@@ -7,9 +7,8 @@
 //   the no-match panel (showing the term + clear action) — NOT the zero-state panel.
 //   If the two @if branches are swapped or the condition collapses, this test fails.
 
-import { test, expect } from '@playwright/test';
-
-const apiBase = process.env['LOCAL_HOST'] ?? 'https://localhost:7028';
+import { expect } from '@playwright/test';
+import { test } from '../with-options';
 
 const SEED_RECEIPT = {
   id: 'e2e-no-match-seed-1',
@@ -22,7 +21,7 @@ const SEED_RECEIPT = {
   tags: ['rower', 'sport']
 };
 
-test('no-match panel renders for a non-matching tag search and is distinct from the zero-state', async ({ page }) => {
+test('no-match panel renders for a non-matching tag search and is distinct from the zero-state', async ({ page, apiBase }) => {
   // Intercept GET /receipts (browse, no ?q) → return a known receipt.
   // Intercept GET /receipts?q=* (search) → return empty array.
   // Scoped to the backend host so the Angular page navigation is not intercepted.

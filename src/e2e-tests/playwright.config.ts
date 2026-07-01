@@ -43,7 +43,7 @@ export default defineConfig<TestOptions>({
       use: {
         authority: process.env.AUTHORITY,
         username: process.env.TEST_USERNAME,
-        password: process.env.TEST_PASSWORD,
+        password: process.env.TEST_PASSWORD
       }
     },
     {

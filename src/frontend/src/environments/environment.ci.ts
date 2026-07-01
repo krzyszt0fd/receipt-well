@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:7028',
+  apiUrl: 'https://localhost:7028',
   externalId: {
     authority: '__AUTHORITY__',
     knownAuthority: '__KNOWN_AUTHORITY__',
