@@ -53,7 +53,7 @@ export class ReceiptListComponent implements OnInit, OnDestroy {
   private readonly editInput = viewChild('editInput', { read: ElementRef<HTMLInputElement> });
   private readonly pencilButtons = viewChildren<ElementRef<HTMLElement>>('pencilBtn');
   private pendingPencilFocusId: string | null = null;
-  private renameSubscription: Subscription | null = null;
+  private readonly renameSubscriptions = new Map<string, Subscription>();
 
   constructor() {
     // Move focus into the input when a row enters edit mode.
@@ -112,7 +112,7 @@ export class ReceiptListComponent implements OnInit, OnDestroy {
     this.fetchSubscription?.unsubscribe();
     this.searchSubscription?.unsubscribe();
     this.deleteSubscription?.unsubscribe();
-    this.renameSubscription?.unsubscribe();
+    this.renameSubscriptions.forEach(sub => sub.unsubscribe());
   }
 
   loadReceipts(): void {
@@ -249,15 +249,18 @@ export class ReceiptListComponent implements OnInit, OnDestroy {
     this.pendingPencilFocusId = receipt.id;
     this.editingId.set(null);
 
-    this.renameSubscription?.unsubscribe();
-    this.renameSubscription = this.receiptService.renameReceipt(receipt.id, trimmed).subscribe({
+    this.renameSubscriptions.get(receipt.id)?.unsubscribe();
+    const subscription = this.receiptService.renameReceipt(receipt.id, trimmed).subscribe({
+      next: () => this.renameSubscriptions.delete(receipt.id),
       error: () => {
+        this.renameSubscriptions.delete(receipt.id);
         this.receipts.update(list =>
           list.map(r => (r.id === receipt.id ? { ...r, fileName: previous } : r))
         );
         this.snackBar.open('Failed to rename receipt. Please try again.', 'Dismiss', { duration: 5000 });
       }
     });
+    this.renameSubscriptions.set(receipt.id, subscription);
   }
 
   visibleTags(tags: string[]): string[] {

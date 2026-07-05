@@ -143,4 +143,26 @@ public class ReceiptRenameTests(ReceiptWellWebFactory factory)
         await factory.SearchClient.DidNotReceiveWithAnyArgs()
             .MergeOrUploadDocumentsAsync<ReceiptRenameDocument>(default!);
     }
+
+    [Fact]
+    public async Task Rename_with_a_name_over_255_characters_is_400_with_no_merge()
+    {
+        factory.SearchClient.ClearReceivedCalls();
+        const string oid = "rename-too-long-name-user";
+        var receiptId = Guid.NewGuid().ToString();
+        var fileName = new string('a', 256);
+
+        var client = factory.CreateClient();
+        var request = new HttpRequestMessage(HttpMethod.Put, $"/receipts/{receiptId}")
+        {
+            Content = JsonContent.Create(new { fileName })
+        };
+        request.Headers.Add(TestAuthHandler.OidHeader, oid);
+
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        await factory.SearchClient.DidNotReceiveWithAnyArgs()
+            .MergeOrUploadDocumentsAsync<ReceiptRenameDocument>(default!);
+    }
 }

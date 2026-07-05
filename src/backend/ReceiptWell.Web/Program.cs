@@ -245,6 +245,8 @@ app.MapDelete("/receipts/{id}", async (
     }
 });
 
+const int MaxFileNameLength = 255;
+
 app.MapPut("/receipts/{id}", async (
     HttpContext httpContext,
     string id,
@@ -257,9 +259,19 @@ app.MapPut("/receipts/{id}", async (
 
     if (string.IsNullOrWhiteSpace(request.FileName))
     {
+        endpointLogger.LogInformation("Rejected rename for receipt {ReceiptId} by user {UserId}: file name is empty", id, userId);
         return Results.ValidationProblem(new Dictionary<string, string[]>
         {
             ["fileName"] = ["File name must not be empty."]
+        });
+    }
+
+    if (request.FileName.Trim().Length > MaxFileNameLength)
+    {
+        endpointLogger.LogInformation("Rejected rename for receipt {ReceiptId} by user {UserId}: file name exceeds {MaxLength} characters", id, userId, MaxFileNameLength);
+        return Results.ValidationProblem(new Dictionary<string, string[]>
+        {
+            ["fileName"] = [$"File name must not exceed {MaxFileNameLength} characters."]
         });
     }
 
