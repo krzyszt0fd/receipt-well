@@ -1,7 +1,7 @@
 ---
 change_id: change-receipt-title
 title: Inline-editable receipt title, defaulting to the uploaded file name
-status: implementing
+status: implemented
 created: 2026-07-05
 updated: 2026-07-05
 archived_at: null

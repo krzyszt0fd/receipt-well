@@ -363,25 +363,25 @@ migration, no backfill. Existing receipts are renamable immediately.
 
 #### Manual
 
-- [ ] 1.4 `PUT /receipts/{id}` with a valid body succeeds; new name appears in `GET /receipts`
-- [ ] 1.5 Renaming another user's receipt returns 403 with no change
-- [ ] 1.6 An empty `fileName` returns 400
-- [ ] 1.7 AI-extracted fields unchanged after the rename
+- [x] 1.4 `PUT /receipts/{id}` with a valid body succeeds; new name appears in `GET /receipts`
+- [x] 1.5 Renaming another user's receipt returns 403 with no change
+- [x] 1.6 An empty `fileName` returns 400
+- [x] 1.7 AI-extracted fields unchanged after the rename
 
 ### Phase 2: Frontend — Inline-Edit UI & Tests
 
 #### Automated
 
-- [x] 2.1 Frontend builds: `npm run build`
-- [x] 2.2 Lint passes: `npm run lint`
-- [x] 2.3 Component tests pass: `npm test`
-- [x] 2.4 New spec cases cover enter / save / cancel / validation-block / error-revert
+- [x] 2.1 Frontend builds: `npm run build` — 863afa7
+- [x] 2.2 Lint passes: `npm run lint` — 863afa7
+- [x] 2.3 Component tests pass: `npm test` — 863afa7
+- [x] 2.4 New spec cases cover enter / save / cancel / validation-block / error-revert — 863afa7
 
 #### Manual
 
-- [ ] 2.5 Pencil button enters edit mode; focus lands in the input
-- [ ] 2.6 Enter, blur, and check all save; Esc and X all cancel
-- [ ] 2.7 Saved name persists after a manual refresh
-- [ ] 2.8 Clearing the name and saving is blocked (no request sent)
-- [ ] 2.9 Simulated server error reverts the row and shows the snackbar
-- [ ] 2.10 AXE reports no violations in edit mode
+- [x] 2.5 Pencil button enters edit mode; focus lands in the input
+- [x] 2.6 Enter, blur, and check all save; Esc and X all cancel
+- [x] 2.7 Saved name persists after a manual refresh
+- [x] 2.8 Clearing the name and saving is blocked (no request sent)
+- [x] 2.9 Simulated server error reverts the row and shows the snackbar
+- [x] 2.10 AXE reports no violations in edit mode
