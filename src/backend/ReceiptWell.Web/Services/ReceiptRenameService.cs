@@ -37,10 +37,12 @@ public partial class ReceiptRenameService(
 
         try
         {
-            // Partial merge: send only Id + FileName so AI-written fields
-            // (StoreName/PurchaseDate/Tags/TagsPl) are left untouched.
+            // Partial merge via a dedicated DTO: Azure AI Search merge overwrites *every*
+            // field present in the serialized payload, so a full ReceiptDocument (with its
+            // defaulted UserId/Status/FileSize/Tags) would clobber those. Sending only the
+            // fields below leaves everything else — including UserId — untouched.
             await searchClient.MergeOrUploadDocumentsAsync(
-                new[] { new ReceiptDocument { Id = receiptId, FileName = newFileName } });
+                new[] { new ReceiptRenameDocument { Id = receiptId, FileName = newFileName } });
         }
         catch (RequestFailedException ex)
         {
@@ -67,4 +69,13 @@ public partial class ReceiptRenameService(
     [LoggerMessage(Level = LogLevel.Information,
         Message = "Receipt renamed: user {UserId} receiptId {ReceiptId}")]
     private static partial void LogReceiptRenamed(ILogger logger, string userId, string receiptId);
+}
+
+// Partial merge document: only the fields below are sent to MergeOrUploadDocumentsAsync, so
+// fields omitted here (UserId, BlobUrl, FileSize, Status, UploadedAt, Tags, TagsPl) are left
+// untouched in the index. Mirrors ReceiptWell.Functions' ReceiptEnrichmentDocument pattern.
+public sealed class ReceiptRenameDocument
+{
+    public string Id { get; set; } = string.Empty;
+    public string FileName { get; set; } = string.Empty;
 }

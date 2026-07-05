@@ -4,6 +4,7 @@ using Azure;
 using Azure.Search.Documents;
 using Azure.Search.Documents.Models;
 using ReceiptWell.Models;
+using ReceiptWell.Services;
 
 namespace ReceiptWell.Tests;
 
@@ -41,7 +42,7 @@ public class ReceiptRenameTests(ReceiptWellWebFactory factory)
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
 
         await factory.SearchClient.DidNotReceiveWithAnyArgs()
-            .MergeOrUploadDocumentsAsync<ReceiptDocument>(default!);
+            .MergeOrUploadDocumentsAsync<ReceiptRenameDocument>(default!);
     }
 
     [Fact]
@@ -88,10 +89,10 @@ public class ReceiptRenameTests(ReceiptWellWebFactory factory)
                 },
                 Substitute.For<Response>()));
 
-        IEnumerable<ReceiptDocument>? mergedDocuments = null;
+        IEnumerable<ReceiptRenameDocument>? mergedDocuments = null;
         factory.SearchClient
             .MergeOrUploadDocumentsAsync(
-                Arg.Do<IEnumerable<ReceiptDocument>>(docs => mergedDocuments = docs),
+                Arg.Do<IEnumerable<ReceiptRenameDocument>>(docs => mergedDocuments = docs),
                 Arg.Any<IndexDocumentsOptions>(),
                 Arg.Any<CancellationToken>())
             .Returns(Response.FromValue(
@@ -109,16 +110,15 @@ public class ReceiptRenameTests(ReceiptWellWebFactory factory)
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
         await factory.SearchClient.Received(1).MergeOrUploadDocumentsAsync(
-            Arg.Any<IEnumerable<ReceiptDocument>>(),
+            Arg.Any<IEnumerable<ReceiptRenameDocument>>(),
             Arg.Any<IndexDocumentsOptions>(),
             Arg.Any<CancellationToken>());
 
+        // The merge must use the partial-merge DTO — a type that carries ONLY Id + FileName —
+        // so no defaulted UserId/Status/FileSize/Tags can clobber the stored document.
         var merged = Assert.Single(mergedDocuments!);
         Assert.Equal(receiptId, merged.Id);
         Assert.Equal("renamed-receipt.jpg", merged.FileName);
-        // AI-written fields must not be re-set (they'd be clobbered on a partial merge).
-        Assert.Null(merged.StoreName);
-        Assert.Empty(merged.Tags);
     }
 
     [Theory]
@@ -141,6 +141,6 @@ public class ReceiptRenameTests(ReceiptWellWebFactory factory)
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         await factory.SearchClient.DidNotReceiveWithAnyArgs()
-            .MergeOrUploadDocumentsAsync<ReceiptDocument>(default!);
+            .MergeOrUploadDocumentsAsync<ReceiptRenameDocument>(default!);
     }
 }
