@@ -101,6 +101,7 @@ builder.Services.AddScoped<ReceiptBlobService>();
 builder.Services.AddScoped<ReceiptConfirmService>();
 builder.Services.AddScoped<ReceiptQueryService>();
 builder.Services.AddScoped<ReceiptDeleteService>();
+builder.Services.AddScoped<ReceiptRenameService>();
 
 builder.Services.AddHealthChecks()
     .AddCheck<BlobStorageHealthCheck>("blob-storage")
@@ -244,9 +245,48 @@ app.MapDelete("/receipts/{id}", async (
     }
 });
 
+app.MapPut("/receipts/{id}", async (
+    HttpContext httpContext,
+    string id,
+    RenameRequest request,
+    ReceiptRenameService renameService,
+    ILoggerFactory loggerFactory) =>
+{
+    var endpointLogger = loggerFactory.CreateLogger("receipts-rename");
+    var userId = httpContext.User.GetUserId();
+
+    if (string.IsNullOrWhiteSpace(request.FileName))
+    {
+        return Results.ValidationProblem(new Dictionary<string, string[]>
+        {
+            ["fileName"] = ["File name must not be empty."]
+        });
+    }
+
+    try
+    {
+        var result = await renameService.RenameAsync(id, userId, request.FileName.Trim());
+
+        return result switch
+        {
+            ReceiptRenameResult.Success => Results.NoContent(),
+            ReceiptRenameResult.NotFound => Results.NotFound(),
+            ReceiptRenameResult.Forbidden => Results.Forbid(),
+            _ => throw new InvalidOperationException("Unexpected result type")
+        };
+    }
+    catch (Exception ex)
+    {
+        endpointLogger.LogError(ex, "Failed to rename receipt {ReceiptId} for user {UserId}", id, userId);
+        return Results.Problem(statusCode: 500);
+    }
+});
+
 app.Run();
 
 record ConfirmRequest(string StagingBlobName, string OriginalFileName);
+
+record RenameRequest(string FileName);
 
 // Exposes the implicitly-internal top-level Program type to the test project so
 // WebApplicationFactory<Program> can boot the real app for integration tests.

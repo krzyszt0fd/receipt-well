@@ -66,6 +66,16 @@ Authorization: Bearer {{token}}
 
 ###
 
+PUT {{hostAddress}}/receipts/{{receiptId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "fileName": "renamed-receipt.jpg"
+}
+
+###
+
 DELETE {{hostAddress}}/receipts/{{receiptId}}
 Authorization: Bearer {{token}}
 
