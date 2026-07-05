@@ -307,20 +307,20 @@ No data migration needed. Existing receipts are unaffected; the new endpoint ope
 
 #### Automated
 
-- [x] 3.1 Frontend lint passes
-- [x] 3.2 Frontend unit tests pass
-- [x] 3.3 New `list.component.spec.ts` delete-flow cases pass
-- [x] 3.4 New dialog component spec passes (or is folded into the list spec)
+- [x] 3.1 Frontend lint passes — f7074d3
+- [x] 3.2 Frontend unit tests pass — f7074d3
+- [x] 3.3 New `list.component.spec.ts` delete-flow cases pass — f7074d3
+- [x] 3.4 New dialog component spec passes (or is folded into the list spec) — f7074d3
 
 #### Manual
 
-- [x] 3.5 Delete + confirm removes the row without a page reload
-- [x] 3.6 Delete + cancel leaves the row
-- [x] 3.7 Delete failure shows a snackbar error and leaves the row
-- [x] 3.8 AXE accessibility check on the dialog
+- [x] 3.5 Delete + confirm removes the row without a page reload — f7074d3
+- [x] 3.6 Delete + cancel leaves the row — f7074d3
+- [x] 3.7 Delete failure shows a snackbar error and leaves the row — f7074d3
+- [x] 3.8 AXE accessibility check on the dialog — f7074d3
 
 ### Phase 4: Documentation
 
 #### Manual
 
-- [ ] 4.1 `test-plan.md` Risk #8 row is consistent in format with rows #1-#7
+- [x] 4.1 `test-plan.md` Risk #8 row is consistent in format with rows #1-#7
