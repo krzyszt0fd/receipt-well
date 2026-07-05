@@ -19,21 +19,38 @@ client_id={{clientId}}&scope={{apiScope}}&username={{$dotenv TEST_USERNAME}}&pas
 GET {{hostAddress}}/health
 
 ###
-
+# @name stagingSlot
 POST {{hostAddress}}/receipts/staging-slot
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 ###
 
+@stagingUri = {{stagingSlot.response.body.$.stagingUri}}
+@stagingBlobName = {{stagingSlot.response.body.$.stagingBlobName}}
+
+###
+
+PUT {{stagingUri}}
+Content-Type: image/jpeg
+x-ms-blob-type: BlockBlob
+x-ms-blob-content-disposition: attachment; filename=example1.jpg
+
+< ./examples/example1.jpg
+
+###
+# @name confirm
 POST {{hostAddress}}/receipts/confirm
 Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "stagingBlobName": "",
-  "originalFileName": ""
+  "stagingBlobName": "{{stagingBlobName}}",
+  "originalFileName": "example1.jpg"
 }
+
+###
+@receiptId = {{confirm.response.body.$.receiptId}}
 
 ###
 
@@ -45,6 +62,11 @@ Authorization: Bearer {{token}}
 # Tag search: Polish-stemmed full-text over tags (e.g. "rowery" matches a "rower" tag).
 # Blank/missing q lists all; only the caller's receipts are ever returned.
 GET {{hostAddress}}/receipts?q=rower
+Authorization: Bearer {{token}}
+
+###
+
+DELETE {{hostAddress}}/receipts/{{receiptId}}
 Authorization: Bearer {{token}}
 
 ###

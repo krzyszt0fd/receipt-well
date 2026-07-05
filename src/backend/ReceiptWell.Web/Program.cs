@@ -100,6 +100,7 @@ builder.Services.AddHostedService<SearchIndexInitializer>();
 builder.Services.AddScoped<ReceiptBlobService>();
 builder.Services.AddScoped<ReceiptConfirmService>();
 builder.Services.AddScoped<ReceiptQueryService>();
+builder.Services.AddScoped<ReceiptDeleteService>();
 
 builder.Services.AddHealthChecks()
     .AddCheck<BlobStorageHealthCheck>("blob-storage")
@@ -212,6 +213,33 @@ app.MapGet("/receipts", async (
     catch (Exception ex)
     {
         endpointLogger.LogError(ex, "Failed to list receipts for user {UserId}", userId);
+        return Results.Problem(statusCode: 500);
+    }
+});
+
+app.MapDelete("/receipts/{id}", async (
+    HttpContext httpContext,
+    string id,
+    ReceiptDeleteService deleteService,
+    ILoggerFactory loggerFactory) =>
+{
+    var endpointLogger = loggerFactory.CreateLogger("receipts-delete");
+    var userId = httpContext.User.GetUserId();
+    try
+    {
+        var result = await deleteService.DeleteAsync(id, userId);
+
+        return result switch
+        {
+            ReceiptDeleteResult.Success => Results.NoContent(),
+            ReceiptDeleteResult.NotFound => Results.NotFound(),
+            ReceiptDeleteResult.Forbidden => Results.Forbid(),
+            _ => throw new InvalidOperationException("Unexpected result type")
+        };
+    }
+    catch (Exception ex)
+    {
+        endpointLogger.LogError(ex, "Failed to delete receipt {ReceiptId} for user {UserId}", id, userId);
         return Results.Problem(statusCode: 500);
     }
 });
