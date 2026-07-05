@@ -44,6 +44,13 @@
 - **Rule**: On a 400 response, show an action that resets the form or starts over (e.g. "Try a different file", "Go back") rather than retrying the same request. Extract and display the error message from the RFC 7807 Problem Details body (https://datatracker.ietf.org/doc/html/rfc7807): prefer `detail`, then the first entry in `errors` (field-level messages, e.g. ASP.NET Core `ValidationProblemDetails`), then `title`. On 5xx or network failure, keep the retriable error path.
 - **Applies to**: every UI component that handles API errors; plan the retriable vs. non-retriable error states and their recovery actions upfront in the component contract.
 
+## Azure AI Search: MergeOrUpload with a full POCO clobbers defaulted fields — use a partial-merge DTO
+
+- **Context**: Any write path that calls `SearchClient.MergeOrUploadDocumentsAsync` to update *some* fields of an existing document (e.g. rename `FileName`, set `Status`, write AI-extracted fields).
+- **Problem**: Azure AI Search "merge" overwrites **every field present in the serialized payload**, not just the ones you meaningfully set. Passing a full `ReceiptDocument` with only `Id` + `FileName` assigned still serializes the other properties at their defaults (`UserId=""`, `Status=""`, `FileSize=0`, `Tags=[]`, …), so the merge silently clobbers them. Wiping `UserId` drops the document out of the owner's `UserId eq '{oid}'` query on the next read — the update appears "not to persist". Mock-based tests do **not** catch this: they capture the in-memory object (whose unset fields look empty) and never exercise real merge serialization.
+- **Rule**: For a partial merge, send a dedicated DTO that has **only** the fields to update (mirror `ReceiptWell.Functions`' `ReceiptEnrichmentDocument`/`ReceiptStatusDocument`). Never round-trip or re-shape the full index model for a partial write. In tests, capture the merged argument as that DTO type so the type itself guarantees no extra field is sent.
+- **Applies to**: any `/10x-plan` or implementation touching `MergeOrUploadDocumentsAsync`; `/10x-impl-review` — flag a partial merge that passes the full index model instead of a fields-only DTO.
+
 ## Azure AI Search: wildcard queries bypass the field's language analyzer
 
 - **Context**: `ReceiptQueryService.cs` — any Azure AI Search query path that uses a language analyzer (e.g. `pl.microsoft`, `en.microsoft`) on a field for lemmatization/inflection matching.
