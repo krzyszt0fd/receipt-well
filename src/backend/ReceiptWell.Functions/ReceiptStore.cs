@@ -22,10 +22,16 @@ public partial class ReceiptStore(SearchClient searchClient, ILogger<ReceiptStor
         }
     }
 
-    public Task SetReadyAsync(
+    public async Task SetReadyAsync(
         string receiptId, string? storeName, DateOnly? purchaseDate, IReadOnlyList<string> tags,
         CancellationToken cancellationToken)
     {
+        if (await GetByIdAsync(receiptId, cancellationToken) is null)
+        {
+            LogSkippedDeletedReceipt(logger, receiptId);
+            return;
+        }
+
         var document = new ReceiptEnrichmentDocument
         {
             Id = receiptId,
@@ -40,17 +46,27 @@ public partial class ReceiptStore(SearchClient searchClient, ILogger<ReceiptStor
             TagsPl = tags.ToList(),
             Status = ReceiptStatus.Ready
         };
-        return searchClient.MergeOrUploadDocumentsAsync(new[] { document }, cancellationToken: cancellationToken);
+        await searchClient.MergeOrUploadDocumentsAsync(new[] { document }, cancellationToken: cancellationToken);
     }
 
-    public Task SetErrorAsync(string receiptId, CancellationToken cancellationToken)
+    public async Task SetErrorAsync(string receiptId, CancellationToken cancellationToken)
     {
+        if (await GetByIdAsync(receiptId, cancellationToken) is null)
+        {
+            LogSkippedDeletedReceipt(logger, receiptId);
+            return;
+        }
+
         var document = new ReceiptStatusDocument { Id = receiptId, Status = ReceiptStatus.Error };
-        return searchClient.MergeOrUploadDocumentsAsync(new[] { document }, cancellationToken: cancellationToken);
+        await searchClient.MergeOrUploadDocumentsAsync(new[] { document }, cancellationToken: cancellationToken);
     }
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Receipt not found in index: {ReceiptId}")]
     private static partial void LogReceiptNotFound(ILogger logger, string receiptId, Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Information,
+        Message = "Skipping extraction write for deleted receipt: {ReceiptId}")]
+    private static partial void LogSkippedDeletedReceipt(ILogger logger, string receiptId);
 }
 
 // Partial merge documents: only the fields below are sent to MergeOrUploadDocumentsAsync, so

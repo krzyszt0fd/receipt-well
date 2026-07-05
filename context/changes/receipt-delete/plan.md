@@ -284,24 +284,24 @@ No data migration needed. Existing receipts are unaffected; the new endpoint ope
 
 #### Automated
 
-- [x] 1.1 Backend build succeeds
-- [x] 1.2 Backend test suite passes
-- [x] 1.3 New ownership test passes
-- [x] 1.4 New not-found test passes
-- [x] 1.5 New failure-shape test passes
+- [x] 1.1 Backend build succeeds — 1dab80e
+- [x] 1.2 Backend test suite passes — 1dab80e
+- [x] 1.3 New ownership test passes — 1dab80e
+- [x] 1.4 New not-found test passes — 1dab80e
+- [x] 1.5 New failure-shape test passes — 1dab80e
 
 #### Manual
 
-- [ ] 1.6 `.http`-driven confirm/list/delete round-trip against a local run
-- [ ] 1.7 Confirm underlying blob is gone after delete
+- [x] 1.6 `.http`-driven confirm/list/delete round-trip against a local run — 1dab80e
+- [x] 1.7 Confirm underlying blob is gone after delete — 1dab80e
 
 ### Phase 2: Ghost-document prevention in the extraction pipeline
 
 #### Automated
 
-- [ ] 2.1 Backend build succeeds
-- [ ] 2.2 Backend test suite passes
-- [ ] 2.3 New ghost-document test passes for `SetReadyAsync` and `SetErrorAsync`
+- [x] 2.1 Backend build succeeds
+- [x] 2.2 Backend test suite passes
+- [x] 2.3 New ghost-document test passes for `SetReadyAsync` and `SetErrorAsync`
 
 ### Phase 3: Frontend delete UI
 

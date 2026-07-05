@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ReceiptWell.Web\ReceiptWell.Web.csproj" />
+    <ProjectReference Include="..\ReceiptWell.Functions\ReceiptWell.Functions.csproj" />
   </ItemGroup>
 
 </Project>
