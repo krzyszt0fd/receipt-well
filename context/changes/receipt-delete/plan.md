@@ -299,9 +299,9 @@ No data migration needed. Existing receipts are unaffected; the new endpoint ope
 
 #### Automated
 
-- [x] 2.1 Backend build succeeds
-- [x] 2.2 Backend test suite passes
-- [x] 2.3 New ghost-document test passes for `SetReadyAsync` and `SetErrorAsync`
+- [x] 2.1 Backend build succeeds — c284673
+- [x] 2.2 Backend test suite passes — c284673
+- [x] 2.3 New ghost-document test passes for `SetReadyAsync` and `SetErrorAsync` — c284673
 
 ### Phase 3: Frontend delete UI
 
