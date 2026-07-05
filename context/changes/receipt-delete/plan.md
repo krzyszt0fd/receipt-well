@@ -323,4 +323,4 @@ No data migration needed. Existing receipts are unaffected; the new endpoint ope
 
 #### Manual
 
-- [x] 4.1 `test-plan.md` Risk #8 row is consistent in format with rows #1-#7
+- [x] 4.1 `test-plan.md` Risk #8 row is consistent in format with rows #1-#7 — 628f515
