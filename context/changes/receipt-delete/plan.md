@@ -307,17 +307,17 @@ No data migration needed. Existing receipts are unaffected; the new endpoint ope
 
 #### Automated
 
-- [ ] 3.1 Frontend lint passes
-- [ ] 3.2 Frontend unit tests pass
-- [ ] 3.3 New `list.component.spec.ts` delete-flow cases pass
-- [ ] 3.4 New dialog component spec passes (or is folded into the list spec)
+- [x] 3.1 Frontend lint passes
+- [x] 3.2 Frontend unit tests pass
+- [x] 3.3 New `list.component.spec.ts` delete-flow cases pass
+- [x] 3.4 New dialog component spec passes (or is folded into the list spec)
 
 #### Manual
 
-- [ ] 3.5 Delete + confirm removes the row without a page reload
-- [ ] 3.6 Delete + cancel leaves the row
-- [ ] 3.7 Delete failure shows a snackbar error and leaves the row
-- [ ] 3.8 AXE accessibility check on the dialog
+- [x] 3.5 Delete + confirm removes the row without a page reload
+- [x] 3.6 Delete + cancel leaves the row
+- [x] 3.7 Delete failure shows a snackbar error and leaves the row
+- [x] 3.8 AXE accessibility check on the dialog
 
 ### Phase 4: Documentation
 

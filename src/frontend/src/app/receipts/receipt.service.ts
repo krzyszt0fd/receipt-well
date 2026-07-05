@@ -37,6 +37,10 @@ export class ReceiptService {
     );
   }
 
+  deleteReceipt(id: string): Observable<void> {
+    return this.http.delete<void>(`${environment.apiUrl}/receipts/${id}`);
+  }
+
   async uploadToBlob(sasUri: string, file: File): Promise<void> {
     const response = await fetch(sasUri, {
       method: 'PUT',

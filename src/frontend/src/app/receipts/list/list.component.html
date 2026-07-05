@@ -75,6 +75,14 @@
                 </mat-chip>
                 <span class="receipt-row__filename">{{ receipt.fileName }}</span>
                 <span class="receipt-row__date">{{ receipt.uploadedAt | date: 'short' }}</span>
+                <button
+                  mat-icon-button
+                  type="button"
+                  aria-label="Delete {{ receipt.fileName }}"
+                  (click)="deleteReceipt(receipt)"
+                >
+                  <mat-icon aria-hidden="true">delete</mat-icon>
+                </button>
               </div>
 
               @if (receipt.storeName || receipt.purchaseDate) {

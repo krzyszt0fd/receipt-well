@@ -2,10 +2,13 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ComponentFixture } from '@angular/core/testing';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Observable, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { ReceiptListComponent } from './list.component';
 import { ReceiptService, ReceiptSummary } from '../receipt.service';
+import { DeleteConfirmDialogComponent } from '../delete-confirm-dialog/delete-confirm-dialog.component';
 
 const baseReceipt: ReceiptSummary = {
   id: 'r1',
@@ -273,5 +276,82 @@ describe('ReceiptListComponent search (Phase 2)', () => {
 
     vi.advanceTimersByTime(5000);
     expect(getReceipts).toHaveBeenCalledWith('rower');
+  });
+});
+
+describe('ReceiptListComponent delete flow (Phase 3)', () => {
+  function createDeleteFixture(options: {
+    deleteReceipt?: (id: string) => Observable<void>;
+    dialogResult?: boolean;
+  } = {}) {
+    const dialogRefStub = { afterClosed: () => of(options.dialogResult ?? true) };
+    const dialogOpen = vi.fn(() => dialogRefStub);
+    const snackBarOpen = vi.fn();
+
+    TestBed.configureTestingModule({
+      imports: [ReceiptListComponent],
+      providers: [
+        provideNoopAnimations(),
+        provideRouter([]),
+        {
+          provide: ReceiptService,
+          useValue: {
+            getReceipts: () => of([baseReceipt]),
+            deleteReceipt: options.deleteReceipt ?? (() => of(undefined))
+          }
+        },
+        { provide: MatDialog, useValue: { open: dialogOpen } },
+        { provide: MatSnackBar, useValue: { open: snackBarOpen } }
+      ]
+    });
+
+    const fixture = TestBed.createComponent(ReceiptListComponent);
+    fixture.detectChanges();
+    return { component: fixture.componentInstance, dialogOpen, snackBarOpen };
+  }
+
+  it('opens the confirmation dialog with the receipt fileName', () => {
+    const { component, dialogOpen } = createDeleteFixture();
+
+    component.deleteReceipt(baseReceipt);
+
+    expect(dialogOpen).toHaveBeenCalledWith(
+      DeleteConfirmDialogComponent,
+      expect.objectContaining({ data: { fileName: baseReceipt.fileName } })
+    );
+  });
+
+  it('confirming deletes the receipt and removes it from the list', () => {
+    const deleteReceipt = vi.fn(() => of(undefined));
+    const { component } = createDeleteFixture({ deleteReceipt, dialogResult: true });
+
+    component.deleteReceipt(baseReceipt);
+
+    expect(deleteReceipt).toHaveBeenCalledWith(baseReceipt.id);
+    expect(component.receipts()).toEqual([]);
+  });
+
+  it('cancelling calls neither delete nor changes the list', () => {
+    const deleteReceipt = vi.fn(() => of(undefined));
+    const { component } = createDeleteFixture({ deleteReceipt, dialogResult: false });
+
+    component.deleteReceipt(baseReceipt);
+
+    expect(deleteReceipt).not.toHaveBeenCalled();
+    expect(component.receipts()).toEqual([baseReceipt]);
+  });
+
+  it('shows a snackbar error and keeps the row when delete fails', () => {
+    const deleteReceipt = vi.fn(() => throwError(() => new Error('fail')));
+    const { component, snackBarOpen } = createDeleteFixture({ deleteReceipt, dialogResult: true });
+
+    component.deleteReceipt(baseReceipt);
+
+    expect(snackBarOpen).toHaveBeenCalledWith(
+      'Failed to delete receipt. Please try again.',
+      expect.anything(),
+      expect.anything()
+    );
+    expect(component.receipts()).toEqual([baseReceipt]);
   });
 });

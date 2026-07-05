@@ -5,13 +5,16 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ReceiptService, ReceiptSummary } from '../receipt.service';
+import { DeleteConfirmDialogComponent } from '../delete-confirm-dialog/delete-confirm-dialog.component';
 
 const MAX_VISIBLE_TAGS = 5;
 const POLL_INTERVAL_MS = 5000;
@@ -38,6 +41,8 @@ const SEARCH_DEBOUNCE_MS = 300;
 })
 export class ReceiptListComponent implements OnInit, OnDestroy {
   private readonly receiptService = inject(ReceiptService);
+  private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
 
   readonly searchControl = new FormControl('');
   readonly query = signal('');
@@ -150,6 +155,21 @@ export class ReceiptListComponent implements OnInit, OnDestroy {
   /** Receipts uploaded before the processing queue existed never leave `pending` — stop polling for those. */
   private isStalePending(uploadedAt: string): boolean {
     return Date.now() - new Date(uploadedAt).getTime() > POLL_STALE_THRESHOLD_MS;
+  }
+
+  deleteReceipt(receipt: ReceiptSummary): void {
+    this.dialog
+      .open(DeleteConfirmDialogComponent, { data: { fileName: receipt.fileName } })
+      .afterClosed()
+      .subscribe(confirmed => {
+        if (!confirmed) {
+          return;
+        }
+        this.receiptService.deleteReceipt(receipt.id).subscribe({
+          next: () => this.receipts.update(list => list.filter(r => r.id !== receipt.id)),
+          error: () => this.snackBar.open('Failed to delete receipt. Please try again.', 'Dismiss', { duration: 5000 })
+        });
+      });
   }
 
   visibleTags(tags: string[]): string[] {
