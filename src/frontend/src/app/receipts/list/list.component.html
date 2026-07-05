@@ -73,16 +73,53 @@
                 >
                   {{ receipt.status }}
                 </mat-chip>
-                <span class="receipt-row__filename">{{ receipt.fileName }}</span>
-                <span class="receipt-row__date">{{ receipt.uploadedAt | date: 'short' }}</span>
-                <button
-                  mat-icon-button
-                  type="button"
-                  aria-label="Delete {{ receipt.fileName }}"
-                  (click)="deleteReceipt(receipt)"
-                >
-                  <mat-icon aria-hidden="true">delete</mat-icon>
-                </button>
+                @if (editingId() === receipt.id) {
+                  <mat-form-field class="receipt-row__edit" appearance="outline" subscriptSizing="dynamic">
+                    <input
+                      #editInput
+                      matInput
+                      [formControl]="editControl"
+                      aria-label="Receipt file name"
+                      maxlength="255"
+                      (keydown.enter)="saveEdit(receipt)"
+                      (keydown.escape)="cancelEdit()"
+                      (blur)="saveEdit(receipt)"
+                    />
+                  </mat-form-field>
+                  <button mat-icon-button type="button" aria-label="Save" (click)="saveEdit(receipt)">
+                    <mat-icon aria-hidden="true">check</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    aria-label="Cancel"
+                    (mousedown)="$event.preventDefault()"
+                    (click)="cancelEdit()"
+                  >
+                    <mat-icon aria-hidden="true">close</mat-icon>
+                  </button>
+                } @else {
+                  <span class="receipt-row__filename">{{ receipt.fileName }}</span>
+                  <span class="receipt-row__date">{{ receipt.uploadedAt | date: 'short' }}</span>
+                  <button
+                    #pencilBtn
+                    mat-icon-button
+                    type="button"
+                    [attr.data-receipt-id]="receipt.id"
+                    aria-label="Rename {{ receipt.fileName }}"
+                    (click)="startEdit(receipt)"
+                  >
+                    <mat-icon aria-hidden="true">edit</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    type="button"
+                    aria-label="Delete {{ receipt.fileName }}"
+                    (click)="deleteReceipt(receipt)"
+                  >
+                    <mat-icon aria-hidden="true">delete</mat-icon>
+                  </button>
+                }
               </div>
 
               @if (receipt.storeName || receipt.purchaseDate) {

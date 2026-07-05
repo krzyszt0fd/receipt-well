@@ -357,9 +357,9 @@ migration, no backfill. Existing receipts are renamable immediately.
 
 #### Automated
 
-- [x] 1.1 Solution builds with zero warnings: `dotnet build src/backend/ReceiptWell.sln`
-- [x] 1.2 Backend tests pass: `dotnet test src/backend/ReceiptWell.sln`
-- [x] 1.3 New `ReceiptRenameTests` cover 200, 404, 403, and 400 branches (all green)
+- [x] 1.1 Solution builds with zero warnings: `dotnet build src/backend/ReceiptWell.sln` — b44a160
+- [x] 1.2 Backend tests pass: `dotnet test src/backend/ReceiptWell.sln` — b44a160
+- [x] 1.3 New `ReceiptRenameTests` cover 200, 404, 403, and 400 branches (all green) — b44a160
 
 #### Manual
 
@@ -372,10 +372,10 @@ migration, no backfill. Existing receipts are renamable immediately.
 
 #### Automated
 
-- [ ] 2.1 Frontend builds: `npm run build`
-- [ ] 2.2 Lint passes: `npm run lint`
-- [ ] 2.3 Component tests pass: `npm test`
-- [ ] 2.4 New spec cases cover enter / save / cancel / validation-block / error-revert
+- [x] 2.1 Frontend builds: `npm run build`
+- [x] 2.2 Lint passes: `npm run lint`
+- [x] 2.3 Component tests pass: `npm test`
+- [x] 2.4 New spec cases cover enter / save / cancel / validation-block / error-revert
 
 #### Manual
 

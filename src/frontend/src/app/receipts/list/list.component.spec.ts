@@ -355,3 +355,108 @@ describe('ReceiptListComponent delete flow (Phase 3)', () => {
     expect(component.receipts()).toEqual([baseReceipt]);
   });
 });
+
+describe('ReceiptListComponent rename flow (Phase 2)', () => {
+  function createRenameFixture(options: {
+    renameReceipt?: (id: string, fileName: string) => Observable<void>;
+  } = {}) {
+    const snackBarOpen = vi.fn();
+    const renameReceipt = options.renameReceipt ?? vi.fn(() => of(undefined));
+
+    TestBed.configureTestingModule({
+      imports: [ReceiptListComponent],
+      providers: [
+        provideNoopAnimations(),
+        provideRouter([]),
+        {
+          provide: ReceiptService,
+          useValue: {
+            getReceipts: () => of([baseReceipt]),
+            renameReceipt
+          }
+        },
+        { provide: MatSnackBar, useValue: { open: snackBarOpen } }
+      ]
+    });
+
+    const fixture = TestBed.createComponent(ReceiptListComponent);
+    fixture.detectChanges();
+    return { fixture, component: fixture.componentInstance, renameReceipt, snackBarOpen };
+  }
+
+  it('enters edit mode and seeds the draft with the current fileName', () => {
+    const { component } = createRenameFixture();
+
+    component.startEdit(baseReceipt);
+
+    expect(component.editingId()).toBe(baseReceipt.id);
+    expect(component.editControl.value).toBe(baseReceipt.fileName);
+  });
+
+  it('saving a changed name calls renameReceipt with the trimmed value and updates the row', () => {
+    const renameReceipt = vi.fn(() => of(undefined));
+    const { component } = createRenameFixture({ renameReceipt });
+
+    component.startEdit(baseReceipt);
+    component.editControl.setValue('  new-name.jpg  ');
+    component.saveEdit(baseReceipt);
+
+    expect(renameReceipt).toHaveBeenCalledWith(baseReceipt.id, 'new-name.jpg');
+    expect(component.editingId()).toBeNull();
+    expect(component.receipts()[0].fileName).toBe('new-name.jpg');
+  });
+
+  it('cancelling exits edit mode without calling the service and keeps the original name', () => {
+    const renameReceipt = vi.fn(() => of(undefined));
+    const { component } = createRenameFixture({ renameReceipt });
+
+    component.startEdit(baseReceipt);
+    component.editControl.setValue('discarded');
+    component.cancelEdit();
+
+    expect(renameReceipt).not.toHaveBeenCalled();
+    expect(component.editingId()).toBeNull();
+    expect(component.receipts()[0].fileName).toBe(baseReceipt.fileName);
+  });
+
+  it('blocks the save for an empty/whitespace name and stays in edit mode', () => {
+    const renameReceipt = vi.fn(() => of(undefined));
+    const { component } = createRenameFixture({ renameReceipt });
+
+    component.startEdit(baseReceipt);
+    component.editControl.setValue('   ');
+    component.saveEdit(baseReceipt);
+
+    expect(renameReceipt).not.toHaveBeenCalled();
+    expect(component.editingId()).toBe(baseReceipt.id);
+    expect(component.receipts()[0].fileName).toBe(baseReceipt.fileName);
+  });
+
+  it('does not call the service when the name is unchanged', () => {
+    const renameReceipt = vi.fn(() => of(undefined));
+    const { component } = createRenameFixture({ renameReceipt });
+
+    component.startEdit(baseReceipt);
+    component.saveEdit(baseReceipt);
+
+    expect(renameReceipt).not.toHaveBeenCalled();
+    expect(component.editingId()).toBeNull();
+  });
+
+  it('reverts the row and shows a snackbar when the rename fails', () => {
+    const renameReceipt = vi.fn(() => throwError(() => new Error('fail')));
+    const { component, snackBarOpen } = createRenameFixture({ renameReceipt });
+
+    component.startEdit(baseReceipt);
+    component.editControl.setValue('new-name.jpg');
+    component.saveEdit(baseReceipt);
+
+    expect(renameReceipt).toHaveBeenCalledWith(baseReceipt.id, 'new-name.jpg');
+    expect(component.receipts()[0].fileName).toBe(baseReceipt.fileName);
+    expect(snackBarOpen).toHaveBeenCalledWith(
+      'Failed to rename receipt. Please try again.',
+      expect.anything(),
+      expect.anything()
+    );
+  });
+});

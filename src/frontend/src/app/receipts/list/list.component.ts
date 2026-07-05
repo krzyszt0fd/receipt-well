@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -20,6 +20,7 @@ const MAX_VISIBLE_TAGS = 5;
 const POLL_INTERVAL_MS = 5000;
 const POLL_STALE_THRESHOLD_MS = 30 * 60 * 1000;
 const SEARCH_DEBOUNCE_MS = 300;
+const MAX_FILENAME_LENGTH = 255;
 
 @Component({
   selector: 'app-receipt-list',
@@ -46,6 +47,37 @@ export class ReceiptListComponent implements OnInit, OnDestroy {
 
   readonly searchControl = new FormControl('');
   readonly query = signal('');
+
+  readonly editingId = signal<string | null>(null);
+  readonly editControl = new FormControl('', { nonNullable: true });
+  private readonly editInput = viewChild('editInput', { read: ElementRef<HTMLInputElement> });
+  private readonly pencilButtons = viewChildren<ElementRef<HTMLElement>>('pencilBtn');
+  private pendingPencilFocusId: string | null = null;
+  private renameSubscription: Subscription | null = null;
+
+  constructor() {
+    // Move focus into the input when a row enters edit mode.
+    effect(() => {
+      const input = this.editInput();
+      if (input && this.editingId()) {
+        input.nativeElement.focus();
+      }
+    });
+
+    // Return focus to the row's pencil button once it re-renders on exit.
+    effect(() => {
+      const buttons = this.pencilButtons();
+      if (this.pendingPencilFocusId) {
+        const target = buttons.find(
+          b => b.nativeElement.dataset['receiptId'] === this.pendingPencilFocusId
+        );
+        if (target) {
+          target.nativeElement.focus();
+          this.pendingPencilFocusId = null;
+        }
+      }
+    });
+  }
 
   readonly receipts = signal<ReceiptSummary[]>([]);
   readonly loading = signal(true);
@@ -80,6 +112,7 @@ export class ReceiptListComponent implements OnInit, OnDestroy {
     this.fetchSubscription?.unsubscribe();
     this.searchSubscription?.unsubscribe();
     this.deleteSubscription?.unsubscribe();
+    this.renameSubscription?.unsubscribe();
   }
 
   loadReceipts(): void {
@@ -173,6 +206,58 @@ export class ReceiptListComponent implements OnInit, OnDestroy {
           error: () => this.snackBar.open('Failed to delete receipt. Please try again.', 'Dismiss', { duration: 5000 })
         });
       });
+  }
+
+  startEdit(receipt: ReceiptSummary): void {
+    this.editControl.setValue(receipt.fileName);
+    this.editingId.set(receipt.id);
+  }
+
+  cancelEdit(): void {
+    const id = this.editingId();
+    if (id === null) {
+      return;
+    }
+    this.pendingPencilFocusId = id;
+    this.editingId.set(null);
+  }
+
+  saveEdit(receipt: ReceiptSummary): void {
+    // Guard against a double-save: (blur) fires after (keydown.enter) has already
+    // exited edit mode, so only act while this row is still the one being edited.
+    if (this.editingId() !== receipt.id) {
+      return;
+    }
+
+    const trimmed = this.editControl.value.trim();
+
+    // Empty/whitespace or over-length: block the save and stay in edit mode.
+    if (trimmed.length === 0 || trimmed.length > MAX_FILENAME_LENGTH) {
+      return;
+    }
+
+    // Unchanged: no API call, just leave edit mode.
+    if (trimmed === receipt.fileName) {
+      this.cancelEdit();
+      return;
+    }
+
+    const previous = receipt.fileName;
+    this.receipts.update(list =>
+      list.map(r => (r.id === receipt.id ? { ...r, fileName: trimmed } : r))
+    );
+    this.pendingPencilFocusId = receipt.id;
+    this.editingId.set(null);
+
+    this.renameSubscription?.unsubscribe();
+    this.renameSubscription = this.receiptService.renameReceipt(receipt.id, trimmed).subscribe({
+      error: () => {
+        this.receipts.update(list =>
+          list.map(r => (r.id === receipt.id ? { ...r, fileName: previous } : r))
+        );
+        this.snackBar.open('Failed to rename receipt. Please try again.', 'Dismiss', { duration: 5000 });
+      }
+    });
   }
 
   visibleTags(tags: string[]): string[] {
