@@ -284,43 +284,43 @@ No data migration needed. Existing receipts are unaffected; the new endpoint ope
 
 #### Automated
 
-- [x] 1.1 Backend build succeeds — 1dab80e
-- [x] 1.2 Backend test suite passes — 1dab80e
-- [x] 1.3 New ownership test passes — 1dab80e
-- [x] 1.4 New not-found test passes — 1dab80e
-- [x] 1.5 New failure-shape test passes — 1dab80e
+- [x] 1.1 Backend build succeeds — 5cb3ed9
+- [x] 1.2 Backend test suite passes — 5cb3ed9
+- [x] 1.3 New ownership test passes — 5cb3ed9
+- [x] 1.4 New not-found test passes — 5cb3ed9
+- [x] 1.5 New failure-shape test passes — 5cb3ed9
 
 #### Manual
 
-- [x] 1.6 `.http`-driven confirm/list/delete round-trip against a local run — 1dab80e
-- [x] 1.7 Confirm underlying blob is gone after delete — 1dab80e
+- [x] 1.6 `.http`-driven confirm/list/delete round-trip against a local run — 5cb3ed9
+- [x] 1.7 Confirm underlying blob is gone after delete — 5cb3ed9
 
 ### Phase 2: Ghost-document prevention in the extraction pipeline
 
 #### Automated
 
-- [x] 2.1 Backend build succeeds — c284673
-- [x] 2.2 Backend test suite passes — c284673
-- [x] 2.3 New ghost-document test passes for `SetReadyAsync` and `SetErrorAsync` — c284673
+- [x] 2.1 Backend build succeeds — 7c73574
+- [x] 2.2 Backend test suite passes — 7c73574
+- [x] 2.3 New ghost-document test passes for `SetReadyAsync` and `SetErrorAsync` — 7c73574
 
 ### Phase 3: Frontend delete UI
 
 #### Automated
 
-- [x] 3.1 Frontend lint passes — f7074d3
-- [x] 3.2 Frontend unit tests pass — f7074d3
-- [x] 3.3 New `list.component.spec.ts` delete-flow cases pass — f7074d3
-- [x] 3.4 New dialog component spec passes (or is folded into the list spec) — f7074d3
+- [x] 3.1 Frontend lint passes — a62cbe1
+- [x] 3.2 Frontend unit tests pass — a62cbe1
+- [x] 3.3 New `list.component.spec.ts` delete-flow cases pass — a62cbe1
+- [x] 3.4 New dialog component spec passes (or is folded into the list spec) — a62cbe1
 
 #### Manual
 
-- [x] 3.5 Delete + confirm removes the row without a page reload — f7074d3
-- [x] 3.6 Delete + cancel leaves the row — f7074d3
-- [x] 3.7 Delete failure shows a snackbar error and leaves the row — f7074d3
-- [x] 3.8 AXE accessibility check on the dialog — f7074d3
+- [x] 3.5 Delete + confirm removes the row without a page reload — a62cbe1
+- [x] 3.6 Delete + cancel leaves the row — a62cbe1
+- [x] 3.7 Delete failure shows a snackbar error and leaves the row — a62cbe1
+- [x] 3.8 AXE accessibility check on the dialog — a62cbe1
 
 ### Phase 4: Documentation
 
 #### Manual
 
-- [x] 4.1 `test-plan.md` Risk #8 row is consistent in format with rows #1-#7 — 628f515
+- [x] 4.1 `test-plan.md` Risk #8 row is consistent in format with rows #1-#7 — 45c1de2

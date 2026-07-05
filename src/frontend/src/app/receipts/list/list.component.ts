@@ -61,6 +61,7 @@ export class ReceiptListComponent implements OnInit, OnDestroy {
   private pollTimeoutId: ReturnType<typeof setTimeout> | null = null;
   private fetchSubscription: Subscription | null = null;
   private searchSubscription: Subscription | null = null;
+  private deleteSubscription: Subscription | null = null;
 
   ngOnInit(): void {
     this.searchSubscription = this.searchControl.valueChanges.pipe(
@@ -78,6 +79,7 @@ export class ReceiptListComponent implements OnInit, OnDestroy {
     this.clearPollTimeout();
     this.fetchSubscription?.unsubscribe();
     this.searchSubscription?.unsubscribe();
+    this.deleteSubscription?.unsubscribe();
   }
 
   loadReceipts(): void {
@@ -158,14 +160,15 @@ export class ReceiptListComponent implements OnInit, OnDestroy {
   }
 
   deleteReceipt(receipt: ReceiptSummary): void {
-    this.dialog
+    this.deleteSubscription?.unsubscribe();
+    this.deleteSubscription = this.dialog
       .open(DeleteConfirmDialogComponent, { data: { fileName: receipt.fileName } })
       .afterClosed()
       .subscribe(confirmed => {
         if (!confirmed) {
           return;
         }
-        this.receiptService.deleteReceipt(receipt.id).subscribe({
+        this.deleteSubscription = this.receiptService.deleteReceipt(receipt.id).subscribe({
           next: () => this.receipts.update(list => list.filter(r => r.id !== receipt.id)),
           error: () => this.snackBar.open('Failed to delete receipt. Please try again.', 'Dismiss', { duration: 5000 })
         });

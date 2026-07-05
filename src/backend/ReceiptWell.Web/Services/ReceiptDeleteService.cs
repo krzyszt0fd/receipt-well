@@ -31,6 +31,7 @@ public partial class ReceiptDeleteService(
         }
         catch (RequestFailedException ex) when (ex.Status == 404)
         {
+            LogReceiptNotFound(logger, receiptId);
             return new ReceiptDeleteResult.NotFound();
         }
 
@@ -66,6 +67,10 @@ public partial class ReceiptDeleteService(
         LogReceiptDeleted(logger, userId, receiptId);
         return new ReceiptDeleteResult.Success();
     }
+
+    [LoggerMessage(Level = LogLevel.Information,
+        Message = "Delete requested for receipt {ReceiptId} but it no longer exists")]
+    private static partial void LogReceiptNotFound(ILogger logger, string receiptId);
 
     [LoggerMessage(Level = LogLevel.Warning,
         Message = "Ownership violation: user {UserId} attempted to delete receipt {ReceiptId}")]

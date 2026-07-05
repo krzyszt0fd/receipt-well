@@ -1,7 +1,7 @@
 ---
 change_id: receipt-delete
 title: Receipt delete
-status: implemented
+status: impl_reviewed
 created: 2026-07-01
 updated: 2026-07-05
 archived_at: null
