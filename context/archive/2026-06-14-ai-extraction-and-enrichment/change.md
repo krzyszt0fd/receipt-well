@@ -1,10 +1,10 @@
 ---
 change_id: ai-extraction-and-enrichment
 title: AI extraction and enrichment
-status: implemented
+status: archived
 created: 2026-06-14
-updated: 2026-06-18
-archived_at: null
+updated: 2026-07-13
+archived_at: 2026-07-13T17:53:17Z
 ---
 
 ## Notes
