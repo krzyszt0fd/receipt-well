@@ -30,10 +30,11 @@ public class ReceiptSearchEndpointTests(ReceiptWellWebFactory factory)
         var response = await client.SendAsync(request);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal("rower", capturedText);
+        Assert.NotNull(capturedText);
+        Assert.Contains("TagsPl:rower^3", capturedText);
+        Assert.Contains("Tags:rower*", capturedText);
         Assert.NotNull(capturedOptions);
-        Assert.Contains("TagsPl", capturedOptions!.SearchFields);
-        Assert.Contains(callerId, capturedOptions.Filter);
+        Assert.Contains(callerId, capturedOptions!.Filter);
     }
 
     [Fact]

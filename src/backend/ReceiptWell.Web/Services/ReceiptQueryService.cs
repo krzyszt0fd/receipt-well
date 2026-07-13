@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Azure.Search.Documents;
 using Azure.Search.Documents.Models;
 using ReceiptWell.Models;
@@ -6,6 +7,10 @@ namespace ReceiptWell.Services;
 
 public partial class ReceiptQueryService(SearchClient searchClient, ILogger<ReceiptQueryService> logger)
 {
+    // Lucene special characters that must be escaped before a user term enters a Full query string.
+    [GeneratedRegex("[+\\-&|!(){}\\[\\]^\"~*?:\\\\/]")]
+    private static partial Regex LuceneSpecialCharacters();
+
     public async Task<IReadOnlyList<ReceiptSummary>> GetReceiptsAsync(
         string userId, string? query, CancellationToken cancellationToken)
     {
@@ -18,16 +23,23 @@ public partial class ReceiptQueryService(SearchClient searchClient, ILogger<Rece
             Size = 1000
         };
 
+        string searchText;
         if (isSearch)
         {
-            options.SearchFields.Add("TagsPl");
+            // Combine both matching styles in one relevance-ranked query: TagsPl is analyzed
+            // (pl.microsoft) so it lemmatizes whole words ("rowery" -> "rower"), while a raw
+            // wildcard on Tags bypasses the analyzer for as-you-type prefix matching. The ^3
+            // boost ranks lemma/exact hits above noisy prefix hits.
+            var escaped = LuceneSpecialCharacters().Replace(term!, "\\$0");
+            searchText = $"TagsPl:{escaped}^3 OR Tags:{escaped}*";
+            options.QueryType = SearchQueryType.Full;
         }
         else
         {
             options.OrderBy.Add("UploadedAt desc");
+            searchText = "*";
         }
 
-        var searchText = isSearch ? term : "*";
         var response = await searchClient.SearchAsync<ReceiptDocument>(searchText, options, cancellationToken);
 
         var summaries = new List<ReceiptSummary>();
