@@ -3,7 +3,7 @@ project: ReceiptWell
 version: 1
 status: draft
 created: 2026-05-31
-updated: 2026-05-31
+updated: 2026-07-13
 prd_version: 1
 main_goal: market-feedback
 top_blocker: decisions
@@ -29,11 +29,11 @@ Indywidualny konsument gubi lub traci czytelność paragonów papierowych — w 
 
 | ID   | Change ID                     | Outcome (user can …)                                                            | Prerequisites | PRD refs                      | Status   |
 | ---- | ----------------------------- | ------------------------------------------------------------------------------- | ------------- | ----------------------------- | -------- |
-| F-01 | complete-auth-gate            | (foundation) endpointy chronione `[Authorize]`, Angular route guard podłączony  | —             | FR-001, Access Control        | ready    |
-| S-01 | receipt-upload-confirm        | wgrać zdjęcie paragonu i zobaczyć natychmiastowe potwierdzenie (nazwa, rozmiar) | F-01          | FR-002                        | proposed |
-| S-02 | receipts-list-with-status     | zobaczyć listę swoich paragonów ze statusem przetwarzania                       | F-01, S-01    | US-01 (AC), NFR status        | proposed |
-| S-03 | ai-extraction-and-enrichment  | zobaczyć w liście wyciągnięte metadane: sklep, datę, tagi                       | F-01, S-01    | FR-003, FR-004, NFR async     | proposed |
-| S-04 | tag-search                    | wpisać tag i znaleźć swój paragon w wynikach wyszukiwania                       | F-01, S-03    | FR-005, US-01                 | proposed |
+| F-01 | complete-auth-gate            | (foundation) endpointy chronione `[Authorize]`, Angular route guard podłączony  | —             | FR-001, Access Control        | done     |
+| S-01 | receipt-upload-confirm        | wgrać zdjęcie paragonu i zobaczyć natychmiastowe potwierdzenie (nazwa, rozmiar) | F-01          | FR-002                        | done     |
+| S-02 | receipts-list-with-status     | zobaczyć listę swoich paragonów ze statusem przetwarzania                       | F-01, S-01    | US-01 (AC), NFR status        | done     |
+| S-03 | ai-extraction-and-enrichment  | zobaczyć w liście wyciągnięte metadane: sklep, datę, tagi                       | F-01, S-01    | FR-003, FR-004, NFR async     | done     |
+| S-04 | tag-search                    | wpisać tag i znaleźć swój paragon w wynikach wyszukiwania                       | F-01, S-03    | FR-005, US-01                 | done     |
 | S-05 | receipt-thumbnail-in-search   | zobaczyć miniaturę zdjęcia paragonu przy wynikach wyszukiwania                  | S-04          | FR-006                        | proposed |
 
 ## Streams
@@ -71,7 +71,7 @@ Foundations poniżej zakładają, że poniższe warstwy są obecne i ich nie prz
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Bez auth gate każdy endpoint jest publiczny — błąd konfiguracji narusza guardrail prywatności (izolacja paragonów per konto). Sequenced jako pierwsze, bo downstream slices nie mogą być bezpiecznie wdrożone bez tego zabezpieczenia.
-- **Status:** ready
+- **Status:** done
 
 ## Slices
 
@@ -85,7 +85,7 @@ Foundations poniżej zakładają, że poniższe warstwy są obecne i ich nie prz
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Slice wprowadza kontrakt danych: Azure Blob dla zdjęć + encja Receipt (ID, blob URL, status: pending, timestamp). Kontrakt ten jest konsumowany przez S-02 (lista) i S-03 (AI pipeline) — zmiana modelu Receipt po S-01 kosztuje podwójnie.
-- **Status:** proposed
+- **Status:** done
 
 ### S-02: Lista paragonów ze statusem
 
@@ -97,7 +97,7 @@ Foundations poniżej zakładają, że poniższe warstwy są obecne i ich nie prz
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Do momentu ukończenia S-03 wszystkie paragony na liście będą w statusie "w trakcie" (AI pipeline jeszcze nie działa). To poprawny stan przejściowy — lista jest użyteczna jako potwierdzenie, że wgranie dotarło.
-- **Status:** proposed
+- **Status:** done
 
 ### S-03: Wzbogacenie paragonów przez AI
 
@@ -110,7 +110,7 @@ Foundations poniżej zakładają, że poniższe warstwy są obecne i ich nie prz
 - **Unknowns:**
   - Czy jakość ekstrakcji AI jest wystarczająca na zbladniętych i niskiej jakości paragonach, by tagi były użyteczne? — Owner: user (walidacja na realnych paragonach podczas implementacji). Block: no (PRD ma fallback: paragon pozostaje z danymi cząstkowymi i zdjęciem; ale jeśli ekstrakcja zawodzi zbyt często, hipoteza produktowa odpada).
 - **Risk:** Technicznie najcięższy slice: Azure Functions (trigger blob) + AI SDK for .NET + normalizacja tagów do PL + zapis wyników z powrotem do Receipt. Zalecane: przetestować ekstrakcję na 5–10 realnych paragonach jak najwcześniej, zanim pipeline pójdzie na produkcję.
-- **Status:** proposed
+- **Status:** done
 
 ### S-04: Wyszukiwanie po tagu
 
@@ -122,7 +122,7 @@ Foundations poniżej zakładają, że poniższe warstwy są obecne i ich nie prz
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Slice wprowadza Azure Search index: indeksowanie paragonów po tagach + endpoint wyszukiwania + UI. Jakość wyników bezpośrednio zależy od jakości tagów z S-03 — jeśli S-03's Unknown potwierdzi słabą ekstrakcję, S-04 ujawni to użytkownikowi jako pierwsze.
-- **Status:** proposed
+- **Status:** done
 
 ### S-05: Miniatury paragonów w wynikach
 
@@ -161,3 +161,8 @@ Foundations poniżej zakładają, że poniższe warstwy są obecne i ich nie prz
 ## Done
 
 (Empty on first generation. `/10x-archive` appends an entry here — and flips that item's `Status` to `done` — when a change whose `Change ID` matches the item is archived.)
+- **F-01: (foundation) wszystkie endpointy aplikacji chronione atrybutem `[Authorize]`; Angular routes wymagające logowania przekierowują do Entra External ID zamiast ładować się bez sesji.** — Archived 2026-07-13 → `context/archive/2026-06-02-complete-auth-gate/`. Lesson: —.
+- **S-01: użytkownik może wgrać zdjęcie paragonu i zobaczyć natychmiastowe potwierdzenie z nazwą pliku i rozmiarem** — Archived 2026-07-13 → `context/archive/2026-06-07-receipt-upload-confirm/`. Lesson: —.
+- **S-02: użytkownik może zobaczyć listę swoich wgranych paragonów ze statusem przetwarzania ("w trakcie" / "gotowy")** — Archived 2026-07-13 → `context/archive/2026-06-21-receipts-list-with-status/`. Lesson: —.
+- **S-03: użytkownik widzi na liście paragonów wyciągnięte metadane: nazwę sklepu, datę wystawienia i tagi produktu** — Archived 2026-07-13 → `context/archive/2026-06-14-ai-extraction-and-enrichment/`. Lesson: —.
+- **S-04: użytkownik może wpisać tag (np. "rower") i znaleźć swój paragon w wynikach wyszukiwania** — Archived 2026-07-13 → `context/archive/2026-06-24-tag-search/`. Lesson: —.
