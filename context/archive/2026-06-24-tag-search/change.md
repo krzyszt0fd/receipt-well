@@ -1,10 +1,10 @@
 ---
 change_id: tag-search
 title: Tag search
-status: impl_reviewed
+status: archived
 created: 2026-06-24
-updated: 2026-06-27
-archived_at: null
+updated: 2026-07-13
+archived_at: 2026-07-13T17:53:17Z
 ---
 
 ## Notes
