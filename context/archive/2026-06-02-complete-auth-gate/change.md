@@ -1,10 +1,10 @@
 ---
 change_id: complete-auth-gate
 title: Complete auth gate
-status: implemented
+status: archived
 created: 2026-06-02
-updated: 2026-06-02
-archived_at: null
+updated: 2026-07-13
+archived_at: 2026-07-13T17:53:17Z
 ---
 
 ## Notes
