@@ -1,10 +1,10 @@
 ---
 change_id: receipts-list-with-status
 title: Receipts list with status
-status: implemented
+status: archived
 created: 2026-06-21
-updated: 2026-06-23
-archived_at: null
+updated: 2026-07-13
+archived_at: 2026-07-13T17:53:17Z
 ---
 
 ## Notes
