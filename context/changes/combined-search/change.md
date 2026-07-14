@@ -1,7 +1,7 @@
 ---
 change_id: combined-search
 title: Combine linguistic and prefix matching in tag search
-status: implementing
+status: implemented
 created: 2026-07-13
 updated: 2026-07-14
 archived_at: null

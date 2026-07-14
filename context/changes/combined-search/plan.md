@@ -329,13 +329,13 @@ normalized tag list on enrichment. No schema change, no rebuild, no backfill.
 
 #### Automated
 
-- [x] 2.1 Frontend unit tests pass (`npm test` in `src/frontend/`)
-- [x] 2.2 A 1-character term fires no `getReceipts` call after the debounce window
-- [x] 2.3 A 2-character term fires `getReceipts` with that term after 300ms
-- [x] 2.4 Clearing to empty still fetches browse-all (`getReceipts(undefined)`)
+- [x] 2.1 Frontend unit tests pass (`npm test` in `src/frontend/`) — 89d0eee
+- [x] 2.2 A 1-character term fires no `getReceipts` call after the debounce window — 89d0eee
+- [x] 2.3 A 2-character term fires `getReceipts` with that term after 300ms — 89d0eee
+- [x] 2.4 Clearing to empty still fetches browse-all (`getReceipts(undefined)`) — 89d0eee
 
 #### Manual
 
-- [x] 2.5 Single character shows no new results; the 2nd character triggers the search
-- [x] 2.6 Clearing the box reverts to browse-all newest-first
-- [x] 2.7 Deleting from ≥2 chars down to 1 does not error and holds the last results
+- [x] 2.5 Single character shows no new results; the 2nd character triggers the search — 89d0eee
+- [x] 2.6 Clearing the box reverts to browse-all newest-first — 89d0eee
+- [x] 2.7 Deleting from ≥2 chars down to 1 does not error and holds the last results — 89d0eee
