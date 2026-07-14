@@ -221,6 +221,30 @@ describe('ReceiptListComponent search (Phase 2)', () => {
     expect(getReceipts).toHaveBeenCalledWith('rower');
   });
 
+  it('fires no fetch for a 1-character term after the debounce window', () => {
+    const getReceipts = vi.fn(() => of([]) as Observable<ReceiptSummary[]>);
+    const fixture = createSearchFixture(getReceipts);
+    const component = fixture.componentInstance;
+
+    getReceipts.mockClear();
+    component.searchControl.setValue('r');
+    vi.advanceTimersByTime(300);
+
+    expect(getReceipts).not.toHaveBeenCalled();
+  });
+
+  it('fires the fetch with the term once it reaches the 2-character minimum', () => {
+    const getReceipts = vi.fn(() => of([]) as Observable<ReceiptSummary[]>);
+    const fixture = createSearchFixture(getReceipts);
+    const component = fixture.componentInstance;
+
+    getReceipts.mockClear();
+    component.searchControl.setValue('ro');
+    vi.advanceTimersByTime(300);
+
+    expect(getReceipts).toHaveBeenCalledWith('ro');
+  });
+
   it('shows the no-match panel when a term is active and results are empty', () => {
     const fixture = createSearchFixture(() => of([]));
     const component = fixture.componentInstance;

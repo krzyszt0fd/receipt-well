@@ -20,6 +20,7 @@ const MAX_VISIBLE_TAGS = 5;
 const POLL_INTERVAL_MS = 5000;
 const POLL_STALE_THRESHOLD_MS = 30 * 60 * 1000;
 const SEARCH_DEBOUNCE_MS = 300;
+const MIN_SEARCH_LENGTH = 2;
 const MAX_FILENAME_LENGTH = 255;
 
 @Component({
@@ -100,6 +101,10 @@ export class ReceiptListComponent implements OnInit, OnDestroy {
       debounceTime(SEARCH_DEBOUNCE_MS),
       distinctUntilChanged()
     ).subscribe(term => {
+      const trimmed = (term ?? '').trim();
+      if (trimmed.length !== 0 && trimmed.length < MIN_SEARCH_LENGTH) {
+        return;
+      }
       this.query.set(term ?? '');
       this.refreshReceipts();
     });

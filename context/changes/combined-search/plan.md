@@ -312,18 +312,18 @@ normalized tag list on enrichment. No schema change, no rebuild, no backfill.
 
 #### Automated
 
-- [x] 1.1 Solution builds with zero warnings (`dotnet build src/backend/ReceiptWell.sln`)
-- [x] 1.2 Unit tests pass (`dotnet test src/backend/ReceiptWell.sln`)
-- [x] 1.3 Term test asserts both clauses (`TagsPl:`, `Tags:`), `*` prefix, `^3` boost, and `QueryType.Full`
-- [x] 1.4 Browse-all test still passes unchanged (`*`, `UploadedAt desc`, empty `SearchFields`, caller scoping)
+- [x] 1.1 Solution builds with zero warnings (`dotnet build src/backend/ReceiptWell.sln`) — 14deeb1
+- [x] 1.2 Unit tests pass (`dotnet test src/backend/ReceiptWell.sln`) — 14deeb1
+- [x] 1.3 Term test asserts both clauses (`TagsPl:`, `Tags:`), `*` prefix, `^3` boost, and `QueryType.Full` — 14deeb1
+- [x] 1.4 Browse-all test still passes unchanged (`*`, `UploadedAt desc`, empty `SearchFields`, caller scoping) — 14deeb1
 
 #### Manual
 
-- [x] 1.5 Live `?q=rowery` still returns the `rower`-tagged receipt (lemma under Full)
-- [x] 1.6 Live `?q=rowe` returns both `rower` and `rowery` receipts (prefix)
-- [x] 1.7 Term with a Lucene special char does not error (escaping)
-- [x] 1.8 Doc matching both ways ranks lemma/exact at or above prefix (boost)
-- [x] 1.9 Browse-all unchanged: blank search lists all newest-first, scoped to caller
+- [x] 1.5 Live `?q=rowery` still returns the `rower`-tagged receipt (lemma under Full) — 14deeb1
+- [x] 1.6 Live `?q=rowe` returns both `rower` and `rowery` receipts (prefix) — 14deeb1
+- [x] 1.7 Term with a Lucene special char does not error (escaping) — 14deeb1
+- [x] 1.8 Doc matching both ways ranks lemma/exact at or above prefix (boost) — 14deeb1
+- [x] 1.9 Browse-all unchanged: blank search lists all newest-first, scoped to caller — 14deeb1
 
 ### Phase 2: Frontend 2-character minimum search gate
 
@@ -336,6 +336,6 @@ normalized tag list on enrichment. No schema change, no rebuild, no backfill.
 
 #### Manual
 
-- [ ] 2.5 Single character shows no new results; the 2nd character triggers the search
-- [ ] 2.6 Clearing the box reverts to browse-all newest-first
-- [ ] 2.7 Deleting from ≥2 chars down to 1 does not error and holds the last results
+- [x] 2.5 Single character shows no new results; the 2nd character triggers the search
+- [x] 2.6 Clearing the box reverts to browse-all newest-first
+- [x] 2.7 Deleting from ≥2 chars down to 1 does not error and holds the last results
