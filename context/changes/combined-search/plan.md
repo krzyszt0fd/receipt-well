@@ -164,6 +164,12 @@ SearchQueryType.Full`; asserts `SearchFields` is empty on the search path; and r
 browse-all cases keep asserting `searchText == "*"`, `UploadedAt desc`, empty `SearchFields`,
 and caller scoping.
 
+> **Addendum (impl-review 2026-07-14):** `ReceiptSearchTests.cs` is not the only home of this
+> contract — the endpoint integration test `ReceiptWell.Tests/ReceiptSearchEndpointTests.cs`
+> also asserted the retired lemma-only shape (`Equal("rower", …)` + `SearchFields` contains
+> `TagsPl`) and must be updated to the combined shape (`TagsPl:rower^3`, `Tags:rower*`, no
+> `SearchFields`) in lockstep, or the build fails. Both test files carry the query contract.
+
 ### Success Criteria:
 
 #### Automated Verification:
