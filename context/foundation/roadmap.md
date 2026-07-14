@@ -3,7 +3,7 @@ project: ReceiptWell
 version: 1
 status: draft
 created: 2026-05-31
-updated: 2026-07-13
+updated: 2026-07-14
 prd_version: 1
 main_goal: market-feedback
 top_blocker: decisions
@@ -34,7 +34,8 @@ Indywidualny konsument gubi lub traci czytelność paragonów papierowych — w 
 | S-02 | receipts-list-with-status     | zobaczyć listę swoich paragonów ze statusem przetwarzania                       | F-01, S-01    | US-01 (AC), NFR status        | done     |
 | S-03 | ai-extraction-and-enrichment  | zobaczyć w liście wyciągnięte metadane: sklep, datę, tagi                       | F-01, S-01    | FR-003, FR-004, NFR async     | done     |
 | S-04 | tag-search                    | wpisać tag i znaleźć swój paragon w wynikach wyszukiwania                       | F-01, S-03    | FR-005, US-01                 | done     |
-| S-05 | receipt-thumbnail-in-search   | zobaczyć miniaturę zdjęcia paragonu przy wynikach wyszukiwania                  | S-04          | FR-006                        | proposed |
+| S-05 | receipt-thumbnail-in-search   | zobaczyć miniaturę zdjęcia paragonu przy wynikach wyszukiwania                  | S-04          | FR-006                        | superseded |
+| S-06 | receipt-original-download     | pobrać / otworzyć oryginalne zdjęcie paragonu z listy (dowód zakupu)           | S-04          | Vision (reklamacja/zwrot)     | proposed |
 
 ## Streams
 
@@ -134,6 +135,20 @@ Foundations poniżej zakładają, że poniższe warstwy są obecne i ich nie prz
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Nice-to-have z PRD (secondary success criterion). Zdjęcia są już w Azure Blob po S-01, więc miniatura to głównie kwestia serwowania URL i renderowania w UI. Niskie ryzyko technicznie.
+- **Status:** superseded → S-06
+- **Superseded:** `/10x-frame` (2026-07-14) — miniatura obsługuje _wzrokową identyfikację_ (need drugorzędny; wiersz listy już niesie sklep/datę/tagi), a rdzeniowa potrzeba użytkownika to _pobranie oryginału_ na potrzeby reklamacji/zwrotu. FR-006 (miniatura) świadomie porzucone. Zob. `context/changes/receipt-original-download/frame.md`.
+
+### S-06: Pobranie oryginalnego paragonu z listy
+
+- **Outcome:** użytkownik może pobrać lub otworzyć oryginalne zdjęcie paragonu bezpośrednio z listy — dowód zakupu w momencie reklamacji lub zwrotu
+- **Change ID:** receipt-original-download
+- **PRD refs:** Vision (reklamacja/zwrot — rdzeniowy problem), zastępuje FR-006
+- **Prerequisites:** S-04
+- **Parallel with:** —
+- **Blockers:** —
+- **Unknowns:**
+  - Download-plik vs. otwarcie-w-karcie (podgląd) — decyzja projektowa dla `/10x-plan`; oba jadą na tym samym nowym backendzie. Owner: user.
+- **Risk:** Każda forma (miniatura, podgląd, download) wymaga tego samego brakującego elementu: owner-scoped _read_ do bloba paragonu. `BlobUrl` jest zapisany (prywatny kontener) ale nieudostępniony; jedyny SAS to _write-only_ staging slot. Wzorzec: `ReceiptBlobService.CreateStagingSlotAsync` z `BlobSasPermissions.Read`. Niskie/średnie ryzyko.
 - **Status:** proposed
 
 ## Backlog Handoff
@@ -145,7 +160,8 @@ Foundations poniżej zakładają, że poniższe warstwy są obecne i ich nie prz
 | S-02       | receipts-list-with-status    | Receipt list: display with processing status             | no                    | Wymaga S-01; może iść równolegle z S-03 |
 | S-03       | ai-extraction-and-enrichment | AI pipeline: extraction + tag normalization + enrichment | no                    | Wymaga S-01; może iść równolegle z S-02 |
 | S-04       | tag-search                   | Tag search: Azure Search index + search UI               | no                    | Wymaga S-03                            |
-| S-05       | receipt-thumbnail-in-search  | Receipt thumbnails in search results                     | no                    | Wymaga S-04                            |
+| S-05       | receipt-thumbnail-in-search  | Receipt thumbnails in search results                     | no                    | Superseded → S-06 (`/10x-frame`, 2026-07-14) |
+| S-06       | receipt-original-download    | Download / open original receipt image from the list     | yes                   | Framed; run `/10x-plan receipt-original-download` |
 
 ## Open Roadmap Questions
 
