@@ -313,13 +313,13 @@ at `{userId}/{receiptId}` and a stored `Content-Disposition`.
 
 #### Automated
 
-- [ ] 1.1 Build is warning-free: `dotnet build src/backend/ReceiptWell.sln`
-- [ ] 1.2 Tests pass: `dotnet test src/backend/ReceiptWell.sln`
+- [x] 1.1 Build is warning-free: `dotnet build src/backend/ReceiptWell.sln`
+- [x] 1.2 Tests pass: `dotnet test src/backend/ReceiptWell.sln`
 
 #### Manual
 
-- [ ] 1.3 Owned-receipt request returns a URL that downloads the original with the current file name
-- [ ] 1.4 Foreign receipt id → 403; unknown id → 404
+- [x] 1.3 Owned-receipt request returns a URL that downloads the original with the current file name
+- [x] 1.4 Foreign receipt id → 403; unknown id → 404
 
 ### Phase 2: Frontend download action
 

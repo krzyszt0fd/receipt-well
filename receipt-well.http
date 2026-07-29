@@ -80,3 +80,8 @@ DELETE {{hostAddress}}/receipts/{{receiptId}}
 Authorization: Bearer {{token}}
 
 ###
+
+GET {{hostAddress}}/receipts/{{receiptId}}/download-url
+Authorization: Bearer {{token}}
+
+###

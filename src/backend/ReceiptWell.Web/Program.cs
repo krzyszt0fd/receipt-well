@@ -102,6 +102,7 @@ builder.Services.AddScoped<ReceiptConfirmService>();
 builder.Services.AddScoped<ReceiptQueryService>();
 builder.Services.AddScoped<ReceiptDeleteService>();
 builder.Services.AddScoped<ReceiptRenameService>();
+builder.Services.AddScoped<ReceiptDownloadService>();
 
 builder.Services.AddHealthChecks()
     .AddCheck<BlobStorageHealthCheck>("blob-storage")
@@ -241,6 +242,33 @@ app.MapDelete("/receipts/{id}", async (
     catch (Exception ex)
     {
         endpointLogger.LogError(ex, "Failed to delete receipt {ReceiptId} for user {UserId}", id, userId);
+        return Results.Problem(statusCode: 500);
+    }
+});
+
+app.MapGet("/receipts/{id}/download-url", async (
+    HttpContext httpContext,
+    string id,
+    ReceiptDownloadService downloadService,
+    ILoggerFactory loggerFactory) =>
+{
+    var endpointLogger = loggerFactory.CreateLogger("receipts-download-url");
+    var userId = httpContext.User.GetUserId();
+    try
+    {
+        var result = await downloadService.GetDownloadUrlAsync(id, userId);
+
+        return result switch
+        {
+            ReceiptDownloadResult.Success success => Results.Ok(new { downloadUri = success.DownloadUri.ToString() }),
+            ReceiptDownloadResult.NotFound => Results.NotFound(),
+            ReceiptDownloadResult.Forbidden => Results.Forbid(),
+            _ => throw new InvalidOperationException("Unexpected result type")
+        };
+    }
+    catch (Exception ex)
+    {
+        endpointLogger.LogError(ex, "Failed to generate download URL for receipt {ReceiptId} for user {UserId}", id, userId);
         return Results.Problem(statusCode: 500);
     }
 });
