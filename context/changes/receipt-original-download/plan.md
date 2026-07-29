@@ -351,8 +351,8 @@ at `{userId}/{receiptId}` and a stored `Content-Disposition`.
 
 #### Automated
 
-- [x] 3.1 Spec passes: `npx playwright test tests/receipt-download.spec.ts --project=chrome --no-deps`
+- [x] 3.1 Spec passes: `npx playwright test tests/receipt-download.spec.ts --project=chrome --no-deps` — 2bcb1cf
 
 #### Manual
 
-- [x] 3.2 Spec reliably passes across repeated runs (no flake)
+- [x] 3.2 Spec reliably passes across repeated runs (no flake) — 2bcb1cf
