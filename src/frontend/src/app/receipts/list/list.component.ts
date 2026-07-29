@@ -95,6 +95,7 @@ export class ReceiptListComponent implements OnInit, OnDestroy {
   private fetchSubscription: Subscription | null = null;
   private searchSubscription: Subscription | null = null;
   private deleteSubscription: Subscription | null = null;
+  private downloadSubscription: Subscription | null = null;
 
   ngOnInit(): void {
     this.searchSubscription = this.searchControl.valueChanges.pipe(
@@ -117,6 +118,7 @@ export class ReceiptListComponent implements OnInit, OnDestroy {
     this.fetchSubscription?.unsubscribe();
     this.searchSubscription?.unsubscribe();
     this.deleteSubscription?.unsubscribe();
+    this.downloadSubscription?.unsubscribe();
     this.renameSubscriptions.forEach(sub => sub.unsubscribe());
   }
 
@@ -211,6 +213,26 @@ export class ReceiptListComponent implements OnInit, OnDestroy {
           error: () => this.snackBar.open('Failed to delete receipt. Please try again.', 'Dismiss', { duration: 5000 })
         });
       });
+  }
+
+  downloadReceipt(receipt: ReceiptSummary): void {
+    this.downloadSubscription?.unsubscribe();
+    this.downloadSubscription = this.receiptService.getDownloadUrl(receipt.id).subscribe({
+      next: ({ downloadUri }) => this.triggerDownload(downloadUri),
+      error: () => this.snackBar.open('Failed to download receipt. Please try again.', 'Dismiss', { duration: 5000 })
+    });
+  }
+
+  // A same-tab navigation (window.location.href) replaces the whole SPA with the
+  // browser's native error page if the blob URL is unreachable (expired SAS, deleted
+  // blob, storage outage) — there's no Content-Disposition to intercept when the
+  // request never gets a response. Opening in a new tab confines that failure there.
+  private triggerDownload(uri: string): void {
+    const anchor = document.createElement('a');
+    anchor.href = uri;
+    anchor.target = '_blank';
+    anchor.rel = 'noopener';
+    anchor.click();
   }
 
   startEdit(receipt: ReceiptSummary): void {

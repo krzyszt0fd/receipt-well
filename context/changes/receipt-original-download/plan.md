@@ -325,16 +325,16 @@ at `{userId}/{receiptId}` and a stored `Content-Disposition`.
 
 #### Automated
 
-- [ ] 2.1 Frontend builds: `npm run build`
-- [ ] 2.2 Lint passes: `npm run lint`
+- [x] 2.1 Frontend builds: `npm run build`
+- [x] 2.2 Lint passes: `npm run lint`
 
 #### Manual
 
-- [ ] 2.3 Each row shows an accessible download icon beside rename/delete
-- [ ] 2.4 Clicking downloads the original image with the current file name
-- [ ] 2.5 Rename then download yields a file named with the new name
-- [ ] 2.6 Simulated backend failure shows the error snackbar; list unaffected
-- [ ] 2.7 Button is keyboard-reachable and its label is announced
+- [x] 2.3 Each row shows an accessible download icon beside rename/delete
+- [x] 2.4 Clicking downloads the original image with the current file name
+- [x] 2.5 Rename then download yields a file named with the new name
+- [x] 2.6 Simulated backend failure shows the error snackbar; list unaffected
+- [x] 2.7 Button is keyboard-reachable and its label is announced
 
 ### Phase 3: E2E click-flow test
 

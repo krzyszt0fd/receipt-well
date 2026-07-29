@@ -45,6 +45,10 @@ export class ReceiptService {
     return this.http.put<void>(`${environment.apiUrl}/receipts/${id}`, { fileName });
   }
 
+  getDownloadUrl(id: string): Observable<{ downloadUri: string }> {
+    return this.http.get<{ downloadUri: string }>(`${environment.apiUrl}/receipts/${id}/download-url`);
+  }
+
   async uploadToBlob(sasUri: string, file: File): Promise<void> {
     const response = await fetch(sasUri, {
       method: 'PUT',

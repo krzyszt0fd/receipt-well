@@ -91,6 +91,21 @@
     margin-left: auto;
   }
 
+  &__actions {
+    display: inline-flex;
+    align-items: center;
+
+    // Material's default icon-button box is ~48px regardless of flex gap; the visible
+    // touch-target overlay stays at 48px even when the box shrinks, so this doesn't
+    // reduce the actual tap area. !important overrides the library's own token-driven
+    // width/height/padding, which outrank plain-selector overrides on specificity alone.
+    button {
+      width: 36px !important;
+      height: 36px !important;
+      padding: 6px !important;
+    }
+  }
+
   &__metadata {
     display: flex;
     gap: 16px;
