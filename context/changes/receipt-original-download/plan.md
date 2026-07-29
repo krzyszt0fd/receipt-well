@@ -207,6 +207,17 @@ subscription like the existing `deleteSubscription` and unsubscribe in `ngOnDest
 Button: `aria-label="Download {{ receipt.fileName }}"`, `mat-icon` `download`,
 `aria-hidden` on the icon — passes AXE/WCAG AA per frontend CLAUDE.md.
 
+**Addendum (during manual verification)**: `window.location.href` navigation was
+found to replace the whole SPA with the browser's native error page when the blob
+URL is unreachable (expired SAS, deleted blob, storage outage) — there's no response
+to intercept via Content-Disposition when the request never completes. Adapted to
+open a hidden `<a target="_blank" rel="noopener">` anchor instead
+(`triggerDownload()` in `list.component.ts`), confining that failure to a new tab.
+Also added, at the user's request: a `.receipt-row__actions` wrapper span around the
+rename/download/delete (and save/cancel) buttons, with a scoped `!important` CSS
+override tightening their box size — Material's touch-target overlay stays at 48px
+independent of the visual box, so accessibility is unaffected.
+
 ### Success Criteria:
 
 #### Automated Verification:
@@ -325,23 +336,23 @@ at `{userId}/{receiptId}` and a stored `Content-Disposition`.
 
 #### Automated
 
-- [x] 2.1 Frontend builds: `npm run build`
-- [x] 2.2 Lint passes: `npm run lint`
+- [x] 2.1 Frontend builds: `npm run build` — 2653f9d
+- [x] 2.2 Lint passes: `npm run lint` — 2653f9d
 
 #### Manual
 
-- [x] 2.3 Each row shows an accessible download icon beside rename/delete
-- [x] 2.4 Clicking downloads the original image with the current file name
-- [x] 2.5 Rename then download yields a file named with the new name
-- [x] 2.6 Simulated backend failure shows the error snackbar; list unaffected
-- [x] 2.7 Button is keyboard-reachable and its label is announced
+- [x] 2.3 Each row shows an accessible download icon beside rename/delete — 2653f9d
+- [x] 2.4 Clicking downloads the original image with the current file name — 2653f9d
+- [x] 2.5 Rename then download yields a file named with the new name — 2653f9d
+- [x] 2.6 Simulated backend failure shows the error snackbar; list unaffected — 2653f9d
+- [x] 2.7 Button is keyboard-reachable and its label is announced — 2653f9d
 
 ### Phase 3: E2E click-flow test
 
 #### Automated
 
-- [ ] 3.1 Spec passes: `npx playwright test tests/receipt-download.spec.ts --project=chrome --no-deps`
+- [x] 3.1 Spec passes: `npx playwright test tests/receipt-download.spec.ts --project=chrome --no-deps`
 
 #### Manual
 
-- [ ] 3.2 Spec reliably passes across repeated runs (no flake)
+- [x] 3.2 Spec reliably passes across repeated runs (no flake)

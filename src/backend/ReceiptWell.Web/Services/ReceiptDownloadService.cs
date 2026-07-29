@@ -68,12 +68,20 @@ public partial class ReceiptDownloadService(
         };
         sasBuilder.SetPermissions(BlobSasPermissions.Read);
 
-        if (blob.CanGenerateSasUri)
-            return blob.GenerateSasUri(sasBuilder);
+        try
+        {
+            if (blob.CanGenerateSasUri)
+                return blob.GenerateSasUri(sasBuilder);
 
-        var key = await delegationTokenProvider.GetOrFetchAsync();
-        var queryParams = sasBuilder.ToSasQueryParameters(key, blobServiceClient.AccountName);
-        return new BlobUriBuilder(blob.Uri) { Sas = queryParams }.ToUri();
+            var key = await delegationTokenProvider.GetOrFetchAsync();
+            var queryParams = sasBuilder.ToSasQueryParameters(key, blobServiceClient.AccountName);
+            return new BlobUriBuilder(blob.Uri) { Sas = queryParams }.ToUri();
+        }
+        catch (Exception ex)
+        {
+            LogSasGenerationFailed(logger, blob.Name, ex);
+            throw;
+        }
     }
 
     [LoggerMessage(Level = LogLevel.Information,
@@ -87,4 +95,8 @@ public partial class ReceiptDownloadService(
     [LoggerMessage(Level = LogLevel.Information,
         Message = "Download URL issued: user {UserId} receiptId {ReceiptId}")]
     private static partial void LogDownloadUrlIssued(ILogger logger, string userId, string receiptId);
+
+    [LoggerMessage(Level = LogLevel.Error,
+        Message = "SAS generation failed for blob {BlobName}")]
+    private static partial void LogSasGenerationFailed(ILogger logger, string blobName, Exception ex);
 }

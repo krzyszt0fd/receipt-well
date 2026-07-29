@@ -55,6 +55,39 @@ public class ReceiptDownloadTests(ReceiptWellWebFactory factory)
     }
 
     [Fact]
+    public async Task Download_fails_when_sas_generation_throws_returns_honest_500()
+    {
+        factory.SearchClient.ClearReceivedCalls();
+        factory.BlobServiceClient.ClearReceivedCalls();
+        const string oid = "download-failure-shape-user";
+        var receiptId = Guid.NewGuid().ToString();
+
+        factory.SearchClient
+            .GetDocumentAsync<ReceiptDocument>(receiptId, Arg.Any<GetDocumentOptions>(), Arg.Any<CancellationToken>())
+            .Returns(Response.FromValue(
+                new ReceiptDocument { Id = receiptId, UserId = oid, FileName = "receipt.png" },
+                Substitute.For<Response>()));
+
+        var config = factory.Services.GetRequiredService<IConfiguration>();
+        var receiptsContainerName = config["AzureStorage:ReceiptsContainerName"]!;
+        var receiptsContainer = Substitute.For<BlobContainerClient>();
+        var targetBlob = Substitute.For<BlobClient>();
+        factory.BlobServiceClient.GetBlobContainerClient(receiptsContainerName).Returns(receiptsContainer);
+        receiptsContainer.GetBlobClient($"{oid}/{receiptId}").Returns(targetBlob);
+        targetBlob.CanGenerateSasUri.Returns(true);
+        targetBlob.GenerateSasUri(Arg.Any<BlobSasBuilder>())
+            .Returns(_ => throw new RequestFailedException(500, "Simulated SAS generation failure"));
+
+        var client = factory.CreateClient();
+        var request = new HttpRequestMessage(HttpMethod.Get, $"/receipts/{receiptId}/download-url");
+        request.Headers.Add(TestAuthHandler.OidHeader, oid);
+
+        var response = await client.SendAsync(request);
+
+        await ProblemDetailsAssertions.AssertHonest500Async(response);
+    }
+
+    [Fact]
     public async Task Download_of_another_users_receipt_is_403_with_no_side_effects()
     {
         factory.SearchClient.ClearReceivedCalls();
