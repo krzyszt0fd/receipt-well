@@ -3,7 +3,7 @@ project: ReceiptWell
 version: 1
 status: draft
 created: 2026-05-31
-updated: 2026-07-14
+updated: 2026-07-29
 prd_version: 1
 main_goal: market-feedback
 top_blocker: decisions
@@ -35,7 +35,7 @@ Indywidualny konsument gubi lub traci czytelność paragonów papierowych — w 
 | S-03 | ai-extraction-and-enrichment  | zobaczyć w liście wyciągnięte metadane: sklep, datę, tagi                       | F-01, S-01    | FR-003, FR-004, NFR async     | done     |
 | S-04 | tag-search                    | wpisać tag i znaleźć swój paragon w wynikach wyszukiwania                       | F-01, S-03    | FR-005, US-01                 | done     |
 | S-05 | receipt-thumbnail-in-search   | zobaczyć miniaturę zdjęcia paragonu przy wynikach wyszukiwania                  | S-04          | FR-006                        | superseded |
-| S-06 | receipt-original-download     | pobrać / otworzyć oryginalne zdjęcie paragonu z listy (dowód zakupu)           | S-04          | Vision (reklamacja/zwrot)     | proposed |
+| S-06 | receipt-original-download     | pobrać / otworzyć oryginalne zdjęcie paragonu z listy (dowód zakupu)           | S-04          | Vision (reklamacja/zwrot)     | done |
 
 ## Streams
 
@@ -149,7 +149,7 @@ Foundations poniżej zakładają, że poniższe warstwy są obecne i ich nie prz
 - **Unknowns:**
   - Download-plik vs. otwarcie-w-karcie (podgląd) — decyzja projektowa dla `/10x-plan`; oba jadą na tym samym nowym backendzie. Owner: user.
 - **Risk:** Każda forma (miniatura, podgląd, download) wymaga tego samego brakującego elementu: owner-scoped _read_ do bloba paragonu. `BlobUrl` jest zapisany (prywatny kontener) ale nieudostępniony; jedyny SAS to _write-only_ staging slot. Wzorzec: `ReceiptBlobService.CreateStagingSlotAsync` z `BlobSasPermissions.Read`. Niskie/średnie ryzyko.
-- **Status:** proposed
+- **Status:** done
 
 ## Backlog Handoff
 
@@ -182,3 +182,4 @@ Foundations poniżej zakładają, że poniższe warstwy są obecne i ich nie prz
 - **S-02: użytkownik może zobaczyć listę swoich wgranych paragonów ze statusem przetwarzania ("w trakcie" / "gotowy")** — Archived 2026-07-13 → `context/archive/2026-06-21-receipts-list-with-status/`. Lesson: —.
 - **S-03: użytkownik widzi na liście paragonów wyciągnięte metadane: nazwę sklepu, datę wystawienia i tagi produktu** — Archived 2026-07-13 → `context/archive/2026-06-14-ai-extraction-and-enrichment/`. Lesson: —.
 - **S-04: użytkownik może wpisać tag (np. "rower") i znaleźć swój paragon w wynikach wyszukiwania** — Archived 2026-07-13 → `context/archive/2026-06-24-tag-search/`. Lesson: —.
+- **S-06: użytkownik może pobrać lub otworzyć oryginalne zdjęcie paragonu bezpośrednio z listy — dowód zakupu w momencie reklamacji lub zwrotu** — Archived 2026-07-29 → `context/archive/2026-07-14-receipt-original-download/`. Lesson: —.

@@ -1,10 +1,10 @@
 ---
 change_id: receipt-original-download
 title: Retrieve the original receipt image from the list (supersedes roadmap S-05 thumbnail)
-status: implemented
+status: archived
 created: 2026-07-14
 updated: 2026-07-29
-archived_at: null
+archived_at: 2026-07-29T14:50:10Z
 ---
 
 ## Notes
