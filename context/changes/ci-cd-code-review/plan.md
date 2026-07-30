@@ -345,7 +345,7 @@ Not applicable — this is new workflow surface with no existing state to migrat
 
 #### Automated
 
-- [ ] 4.1 Workflow YAML is syntactically valid
+- [x] 4.1 Workflow YAML is syntactically valid
 
 #### Manual
 
