@@ -68,4 +68,7 @@ test('clicking the download action fetches the SAS URL and downloads the file', 
   const download = await downloadPromise;
 
   expect(download.suggestedFilename()).toBe(FILE_NAME);
+
+  await page.waitForTimeout(500);
+  await expect(page.locator('.receipt-row .file-name')).toBeVisible();
 });

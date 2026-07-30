@@ -2,7 +2,7 @@
   @if (loading()) {
     <mat-card class="page-card">
       <mat-card-content>
-        <div class="loading-row">
+        <div class="loading-row" [ngClass]="{ 'is-loading': loading() }">
           <mat-spinner diameter="32" />
           <span>Loading receipts…</span>
         </div>
