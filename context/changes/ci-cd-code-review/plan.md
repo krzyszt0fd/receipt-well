@@ -327,7 +327,7 @@ Not applicable — this is new workflow surface with no existing state to migrat
 
 #### Automated
 
-- [x] 2.1 `action.yml` is valid composite-action YAML
+- [x] 2.1 `action.yml` is valid composite-action YAML — 33b8c00
 
 #### Manual
 

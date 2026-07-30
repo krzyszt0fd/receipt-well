@@ -51,3 +51,62 @@ runs:
         PR_TITLE: ${{ inputs.pr-title }}
         PR_DESCRIPTION: ${{ inputs.pr-description }}
       run: npx tsx src/review.ts < "$RUNNER_TEMP/pr.diff" > "$RUNNER_TEMP/review-result.json"
+
+    - name: Post failure comment
+      if: steps.run-review.outcome == 'failure'
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: |
+        cat <<'EOF' > "$RUNNER_TEMP/comment-body.md"
+        ## 🤖 AI Code Review — nie udało się ukończyć
+
+        Automatyczna recenzja napotkała błąd i nie ukończyła analizy tego PR-a.
+        Aby spróbować ponownie, dodaj etykietę `ai-review:review`.
+        EOF
+        gh pr comment ${{ inputs.pr-number }} --edit-last --body-file "$RUNNER_TEMP/comment-body.md" \
+          || gh pr comment ${{ inputs.pr-number }} --body-file "$RUNNER_TEMP/comment-body.md"
+        gh pr edit ${{ inputs.pr-number }} --remove-label "ai-review:review"
+        exit 1
+
+    - name: Build and post review comment
+      if: steps.run-review.outcome == 'success'
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: |
+        RESULT="$RUNNER_TEMP/review-result.json"
+        VERDICT=$(jq -r '.verdict' "$RESULT")
+        SUMMARY=$(jq -r '.summary' "$RESULT")
+        {
+          echo "## 🤖 AI Code Review"
+          echo ""
+          if [ "$VERDICT" = "pass" ]; then
+            echo "**Werdykt: ✅ pass**"
+          else
+            echo "**Werdykt: ❌ fail**"
+          fi
+          echo ""
+          echo "$SUMMARY"
+          echo ""
+          echo "| Kryterium | Ocena |"
+          echo "|---|---|"
+          echo "| Poprawność implementacji | $(jq -r '.implementationCorrectness' "$RESULT") |"
+          echo "| Idiomatyczność | $(jq -r '.idiomaticity' "$RESULT") |"
+          echo "| Złożoność | $(jq -r '.complexity' "$RESULT") |"
+          echo "| Pokrycie testami vs ryzyko | $(jq -r '.testRiskCoverage' "$RESULT") |"
+          echo "| Bezpieczeństwo | $(jq -r '.securitySafety' "$RESULT") |"
+        } > "$RUNNER_TEMP/comment-body.md"
+
+        gh pr comment ${{ inputs.pr-number }} --edit-last --body-file "$RUNNER_TEMP/comment-body.md" \
+          || gh pr comment ${{ inputs.pr-number }} --body-file "$RUNNER_TEMP/comment-body.md"
+
+        OUTCOME_LABEL="ai-review:failed"
+        if [ "$VERDICT" = "pass" ]; then
+          OUTCOME_LABEL="ai-review:passed"
+        fi
+        gh pr edit ${{ inputs.pr-number }} \
+          --remove-label "ai-review:passed" \
+          --remove-label "ai-review:failed" \
+          --remove-label "ai-review:review" \
+          --add-label "$OUTCOME_LABEL"
