@@ -10,10 +10,12 @@ async function readDiff(): Promise<string> {
 
 // Proces review na podstawie git diffa
 async function review(diff: string): Promise<Review> {
+  const prTitle = process.env.PR_TITLE ?? "";
+  const prDescription = process.env.PR_DESCRIPTION ?? "";
 
   // Konfiguracja agenta
   const result = query({
-    prompt: `Zrecenzuj ten diff:\n\n${diff}`,
+    prompt: `Tytuł PR-a: ${prTitle}\nOpis PR-a: ${prDescription}\n\nZrecenzuj ten diff:\n\n${diff}`,
     options: {
       systemPrompt: SYSTEM_PROMPT,
       model: "claude-sonnet-5",
@@ -31,7 +33,7 @@ async function review(diff: string): Promise<Review> {
   for await (const message of result) {
     if (message.type !== "result") continue;
     if (message.subtype === "success") {
-      console.log(`Total review cost: ${message.total_cost_usd} USD, number of turns: ${message.num_turns}.`);
+      console.error(`Total review cost: ${message.total_cost_usd} USD, number of turns: ${message.num_turns}.`);
       const parsed = REVIEW_SCHEMA.safeParse(message.structured_output);
       if (!parsed.success) throw new Error(`Niepoprawny structured output: ${parsed.error.message}`);
       return parsed.data;
