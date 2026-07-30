@@ -17,6 +17,8 @@ public partial class ReceiptRenameService(
 {
     public async Task<ReceiptRenameResult> RenameAsync(string receiptId, string userId, string newFileName)
     {
+        LogRenamePayload(logger, newFileName);
+
         ReceiptDocument document;
         try
         {
@@ -69,6 +71,10 @@ public partial class ReceiptRenameService(
     [LoggerMessage(Level = LogLevel.Information,
         Message = "Receipt renamed: user {UserId} receiptId {ReceiptId}")]
     private static partial void LogReceiptRenamed(ILogger logger, string userId, string receiptId);
+
+    [LoggerMessage(Level = LogLevel.Information,
+        Message = "Rename request body: {NewFileName}")]
+    private static partial void LogRenamePayload(ILogger logger, string newFileName);
 }
 
 // Partial merge document: only the fields below are sent to MergeOrUploadDocumentsAsync, so

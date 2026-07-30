@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, signal, viewChild, viewChildren } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgClass } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -36,7 +36,8 @@ const MAX_FILENAME_LENGTH = 255;
     MatProgressSpinnerModule,
     ReactiveFormsModule,
     RouterLink,
-    DatePipe
+    DatePipe,
+    NgClass
   ],
   templateUrl: './list.component.html',
   styleUrl: './list.component.scss'
