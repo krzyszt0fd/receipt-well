@@ -331,28 +331,28 @@ Not applicable — this is new workflow surface with no existing state to migrat
 
 #### Manual
 
-- [ ] 2.2 A real trigger produces a populated `review-result.json` with verdict, scores, and summary
+- [x] 2.2 A real trigger produces a populated `review-result.json` with verdict, scores, and summary — d965a21
 
 ### Phase 3: Composite action side-effects
 
 #### Manual
 
-- [ ] 3.1 A test PR produces exactly one bot comment and one correct outcome label
-- [ ] 3.2 Re-triggering via `ai-review:review` edits the same comment and clears the trigger label
-- [ ] 3.3 A forced failure fails the check without applying `ai-review:failed`, and posts the error comment
+- [x] 3.1 A test PR produces exactly one bot comment and one correct outcome label — d965a21
+- [x] 3.2 Re-triggering via `ai-review:review` edits the same comment and clears the trigger label — d965a21
+- [x] 3.3 A forced failure fails the check without applying `ai-review:failed`, and posts the error comment — d965a21
 
 ### Phase 4: Workflow wiring
 
 #### Automated
 
-- [x] 4.1 Workflow YAML is syntactically valid
+- [x] 4.1 Workflow YAML is syntactically valid — d965a21
 
 #### Manual
 
-- [ ] 4.2 Opening a PR triggers only the `review` job
-- [ ] 4.3 A push triggers only `clear-stale-label`, no new paid run
-- [ ] 4.4 Adding `ai-review:review` triggers `review` again
-- [ ] 4.5 Rapid successive pushes cancel the earlier in-flight run
+- [x] 4.2 Opening a PR triggers only the `review` job — d965a21
+- [x] 4.3 A push triggers only `clear-stale-label`, no new paid run — d965a21
+- [x] 4.4 Adding `ai-review:review` triggers `review` again — d965a21
+- [x] 4.5 Rapid successive pushes cancel the earlier in-flight run — d965a21
 
 ### Phase 5: Docs & secret provisioning
 
