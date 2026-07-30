@@ -1,0 +1,53 @@
+name: Code Reviewer
+description: Runs the Claude Agent SDK-based diff reviewer against a PR and captures its structured result.
+
+inputs:
+  anthropic-api-key:
+    description: Anthropic API key used to run the review
+    required: true
+  github-token:
+    description: GitHub token used for PR comments/labels
+    required: true
+  pr-number:
+    description: Pull request number
+    required: true
+  pr-title:
+    description: Pull request title
+    required: true
+  pr-description:
+    description: Pull request description/body
+    required: false
+    default: ""
+  base-sha:
+    description: Base commit SHA of the PR
+    required: true
+  head-sha:
+    description: Head commit SHA of the PR
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: lts/*
+
+    - name: Install code-reviewer dependencies
+      shell: bash
+      working-directory: packages/code-reviewer
+      run: npm ci
+
+    - name: Compute PR diff
+      shell: bash
+      run: git diff ${{ inputs.base-sha }}...${{ inputs.head-sha }} > "$RUNNER_TEMP/pr.diff"
+
+    - name: Run review
+      id: run-review
+      shell: bash
+      continue-on-error: true
+      working-directory: packages/code-reviewer
+      env:
+        ANTHROPIC_API_KEY: ${{ inputs.anthropic-api-key }}
+        PR_TITLE: ${{ inputs.pr-title }}
+        PR_DESCRIPTION: ${{ inputs.pr-description }}
+      run: npx tsx src/review.ts < "$RUNNER_TEMP/pr.diff" > "$RUNNER_TEMP/review-result.json"

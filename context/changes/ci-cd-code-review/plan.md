@@ -315,19 +315,19 @@ Not applicable — this is new workflow surface with no existing state to migrat
 
 #### Automated
 
-- [x] 1.1 `npm ci` succeeds in `packages/code-reviewer`
-- [x] 1.2 CLI runs end-to-end against a sample diff, producing valid JSON-only stdout
+- [x] 1.1 `npm ci` succeeds in `packages/code-reviewer` — 3c155db
+- [x] 1.2 CLI runs end-to-end against a sample diff, producing valid JSON-only stdout — 3c155db
 
 #### Manual
 
-- [x] 1.3 Cost line appears on stderr, not stdout
-- [x] 1.4 Review flags a diff touching a curated criterion (e.g. EF Core reference or raw CSS selector)
+- [x] 1.3 Cost line appears on stderr, not stdout — 3c155db
+- [x] 1.4 Review flags a diff touching a curated criterion (e.g. EF Core reference or raw CSS selector) — 3c155db
 
 ### Phase 2: Composite action core
 
 #### Automated
 
-- [ ] 2.1 `action.yml` is valid composite-action YAML
+- [x] 2.1 `action.yml` is valid composite-action YAML
 
 #### Manual
 
