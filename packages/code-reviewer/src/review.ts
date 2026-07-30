@@ -10,6 +10,13 @@ async function readDiff(): Promise<string> {
 
 // Proces review na podstawie git diffa
 async function review(diff: string): Promise<Review> {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    throw new Error(
+      "ANTHROPIC_API_KEY nie jest ustawiony. Dodaj go jako sekret w GitHub → Settings → " +
+      "Secrets and variables → Actions (patrz context/changes/ci-cd-code-review/plan.md, Phase 5)."
+    );
+  }
+
   const prTitle = process.env.PR_TITLE ?? "";
   const prDescription = process.env.PR_DESCRIPTION ?? "";
 
@@ -34,6 +41,13 @@ async function review(diff: string): Promise<Review> {
     if (message.type !== "result") continue;
     if (message.subtype === "success") {
       console.error(`Total review cost: ${message.total_cost_usd} USD, number of turns: ${message.num_turns}.`);
+      if (message.structured_output === undefined) {
+        throw new Error(
+          `Agent zakończył się sukcesem (${message.num_turns} tur, koszt ${message.total_cost_usd} USD), ` +
+          "ale nie zwrócił structured_output. Najczęstsza przyczyna: brak lub niepoprawny ANTHROPIC_API_KEY " +
+          "(uwierzytelnianie zawiodło przed faktycznym wywołaniem modelu)."
+        );
+      }
       const parsed = REVIEW_SCHEMA.safeParse(message.structured_output);
       if (!parsed.success) throw new Error(`Niepoprawny structured output: ${parsed.error.message}`);
       return parsed.data;
